@@ -1,0 +1,11 @@
+export { Navbar } from "./Navbar";
+export { Hero } from "./Hero";
+export { NewsSection } from "./NewsSection";
+export { ScheduleSection } from "./ScheduleSection";
+export { HotelsSection } from "./HotelsSection";
+export { AttractionsSection } from "./AttractionsSection";
+export { PhotosSection } from "./PhotosSection";
+export { Footer } from "./Footer";
+export { ScrollProgress } from "./ScrollProgress";
+export { BackToTop } from "./BackToTop";
+export { WaveDivider } from "./WaveDivider";

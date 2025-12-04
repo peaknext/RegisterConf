@@ -1,0 +1,323 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ==================== Master Tables ====================
+
+model Zone {
+  id       String     @id @default(cuid())
+  code     String     @unique // Z01, Z02, etc.
+  name     String // เขตสุขภาพที่ 1
+  hospitals Hospital[]
+
+  @@map("zones")
+}
+
+model Hospital {
+  id           String   @id @default(cuid())
+  code         String   @unique // H001, H002, etc.
+  hospitalType String?  @map("hospital_type") // A, B, etc.
+  name         String // รพ.นครพิงค์
+  province     String?
+  zoneCode     String?  @map("zone_code")
+  zone         Zone?    @relation(fields: [zoneCode], references: [code])
+  members      Member[]
+  attendees    Attendee[]
+  carnivals    Carnival[]
+
+  @@map("hospitals")
+}
+
+model Level {
+  id     String  @id @default(cuid())
+  code   String  @unique // L01, L02, etc.
+  group  String? // กลุ่มบริหาร
+  name   String  // ระดับสูง
+  status Int     @default(1)
+  attendees Attendee[]
+
+  @@map("levels")
+}
+
+model Position {
+  id   String @id @default(cuid())
+  code String @unique // 1, 2, 3, etc. (originally jid)
+  name String // แพทย์, พยาบาล, etc.
+  attendees Attendee[]
+
+  @@map("positions")
+}
+
+model RegType {
+  id   Int    @id @default(autoincrement())
+  name String // ผู้บริหารระดับ กระทรวง/เขต
+  attendees Attendee[]
+
+  @@map("reg_types")
+}
+
+model Airline {
+  id     Int     @id @default(autoincrement())
+  name   String // บางกอกแอร์เวย์
+  status String  @default("y") // y = active, n = inactive
+
+  @@map("airlines")
+}
+
+model Hotel {
+  id        Int        @id @default(autoincrement())
+  name      String
+  phone     String?
+  website   String?
+  mapUrl    String?    @map("map_url")
+  busFlag   String     @default("Y") @map("bus_flag")
+  status    String     @default("y")
+  attendees Attendee[]
+
+  @@map("hotels")
+}
+
+// ==================== User & Auth ====================
+
+model Member {
+  id           Int       @id @default(autoincrement())
+  email        String    @unique
+  password     String
+  hospitalCode String?   @map("hospital_code")
+  hospital     Hospital? @relation(fields: [hospitalCode], references: [code])
+  memberType   Int       @default(1) @map("member_type") // 99 = admin, 1 = user
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+  attendees    Attendee[]
+  finances     Finance[]
+
+  @@map("members")
+}
+
+// ==================== Registration ====================
+
+model Attendee {
+  id              Int       @id @default(autoincrement())
+  hospitalCode    String?   @map("hospital_code")
+  hospital        Hospital? @relation(fields: [hospitalCode], references: [code])
+  regTypeId       Int?      @map("reg_type_id")
+  regType         RegType?  @relation(fields: [regTypeId], references: [id])
+
+  // Personal Info
+  prefix          String?   // นาย, นาง, นางสาว
+  firstName       String?   @map("first_name")
+  lastName        String?   @map("last_name")
+  positionCode    String?   @map("position_code")
+  position        Position? @relation(fields: [positionCode], references: [code])
+  positionOther   String?   @map("position_other")
+  gpCode          String?   @map("gp_code")
+  gpOther         String?   @map("gp_other")
+  levelCode       String?   @map("level_code")
+  level           Level?    @relation(fields: [levelCode], references: [code])
+
+  // Contact
+  phone           String?
+  email           String?
+  line            String?
+
+  // Preferences
+  foodType        Int?      @map("food_type") // 1 = ปกติ, 2 = มังสวิรัติ, etc.
+  vehicleType     Int?      @map("vehicle_type") // 1 = เครื่องบิน, 2 = รถบัส, etc.
+
+  // Air Travel - Arrival
+  airDate1        DateTime? @map("air_date_1")
+  airline1        String?
+  flightNo1       String?   @map("flight_no_1")
+  airTime1        DateTime? @map("air_time_1")
+
+  // Air Travel - Departure
+  airDate2        DateTime? @map("air_date_2")
+  airline2        String?
+  flightNo2       String?   @map("flight_no_2")
+  airTime2        DateTime? @map("air_time_2")
+  airShuttle      Int?      @map("air_shuttle") // 1 = ต้องการ, 2 = ไม่ต้องการ
+
+  // Bus Travel
+  busDate1        DateTime? @map("bus_date_1")
+  busLine1        String?   @map("bus_line_1")
+  busTime1        DateTime? @map("bus_time_1")
+  busDate2        DateTime? @map("bus_date_2")
+  busLine2        String?   @map("bus_line_2")
+  busTime2        DateTime? @map("bus_time_2")
+  busShuttle      Int?      @map("bus_shuttle")
+
+  // Train Travel
+  trainDate1      DateTime? @map("train_date_1")
+  trainLine1      String?   @map("train_line_1")
+  trainTime1      DateTime? @map("train_time_1")
+  trainDate2      DateTime? @map("train_date_2")
+  trainLine2      String?   @map("train_line_2")
+  trainTime2      DateTime? @map("train_time_2")
+  trainShuttle    Int?      @map("train_shuttle")
+
+  // Accommodation
+  hotelId         Int?      @map("hotel_id")
+  hotel           Hotel?    @relation(fields: [hotelId], references: [id])
+  hotelOther      String?   @map("hotel_other")
+  busToMeet       Int?      @map("bus_to_meet") // 1 = ต้องการรถรับ-ส่ง, 2 = ไม่ต้องการ
+
+  // Status & Audit
+  status          Int       @default(1) // 1 = ค้างชำระ, 2 = รอตรวจสอบ, 3 = ยกเลิก, 9 = ชำระแล้ว
+  createdBy       Int?      @map("created_by")
+  createdByMember Member?   @relation(fields: [createdBy], references: [id])
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime? @updatedAt @map("updated_at")
+  cancelledBy     Int?      @map("cancelled_by")
+
+  @@map("attendees")
+}
+
+model Carnival {
+  id           Int       @id @default(autoincrement())
+  hospitalCode String?   @map("hospital_code")
+  hospital     Hospital? @relation(fields: [hospitalCode], references: [code])
+  prefix       String?
+  firstName    String?   @map("first_name")
+  lastName     String?   @map("last_name")
+  phone        String?
+  email        String?
+  line         String?
+  busToMeet    Int?      @map("bus_to_meet")
+  hotel1       String?
+  hotel2       String?
+  hotel3       String?
+  hotel4       String?
+  hotel5       String?
+  hotel6       String?
+  hotel7       String?
+  createdBy    Int?      @map("created_by")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedBy    Int?      @map("updated_by")
+  updatedAt    DateTime? @map("updated_at")
+
+  @@map("carnivals")
+}
+
+// ==================== Finance ====================
+
+model Finance {
+  id              Int       @id @default(autoincrement())
+  memberId        Int?      @map("member_id")
+  member          Member?   @relation(fields: [memberId], references: [id])
+  attendeeIds     String?   @map("attendee_ids") // comma-separated attendee IDs
+  fileName        String?   @map("file_name")
+  status          Int       @default(1) // 1 = รอตรวจสอบ, 2 = ผ่าน, 9 = ไม่ผ่าน
+  createdAt       DateTime  @default(now()) @map("created_at")
+  confirmedBy     Int?      @map("confirmed_by")
+  confirmedAt     DateTime? @map("confirmed_at")
+  paidDate        DateTime? @map("paid_date")
+
+  @@map("finances")
+}
+
+// ==================== Settings ====================
+
+model Setting {
+  id                  Int      @id @default(autoincrement())
+  name                String?  // ชื่องาน
+  airlineStation      String?  @map("airline_station")
+  accountName         String?  @map("account_name")
+  accountBank         String?  @map("account_bank")
+  accountNo           String?  @map("account_no")
+  meetPrice           Decimal? @map("meet_price") @db.Decimal(10, 2)
+  condition1          String?  @db.Text
+  condition2          String?  @db.Text
+  accountFollowName   String?  @map("account_follow_name")
+  accountFollowBank   String?  @map("account_follow_bank")
+  accountFollowNo     String?  @map("account_follow_no")
+  meetPriceFollow     Decimal? @map("meet_price_follow") @db.Decimal(10, 2)
+
+  @@map("settings")
+}
+
+// ==================== Landing Page Content ====================
+
+model Slideshow {
+  id        Int      @id @default(autoincrement())
+  title     String?
+  imageUrl  String   @map("image_url")
+  linkUrl   String?  @map("link_url")
+  sortOrder Int      @default(0) @map("sort_order")
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("slideshows")
+}
+
+model News {
+  id          Int      @id @default(autoincrement())
+  title       String
+  content     String   @db.Text
+  imageUrl    String?  @map("image_url")
+  isPublished Boolean  @default(true) @map("is_published")
+  publishedAt DateTime @default(now()) @map("published_at")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("news")
+}
+
+model Schedule {
+  id          Int      @id @default(autoincrement())
+  dayNumber   Int      @map("day_number") // วันที่ 1, 2, 3
+  date        DateTime
+  startTime   String   @map("start_time") // "08:00"
+  endTime     String   @map("end_time")   // "09:00"
+  title       String
+  description String?  @db.Text
+  location    String?
+  speaker     String?
+  sortOrder   Int      @default(0) @map("sort_order")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("schedules")
+}
+
+model FooterInfo {
+  id        Int      @id @default(autoincrement())
+  key       String   @unique // organizer_name, address, phone, email, etc.
+  value     String   @db.Text
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("footer_info")
+}
+
+model SiteConfig {
+  id             Int      @id @default(autoincrement())
+  logoUrl        String?  @map("logo_url")
+  googleDriveUrl String?  @map("google_drive_url")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  @@map("site_config")
+}
+
+model Attraction {
+  id          Int      @id @default(autoincrement())
+  name        String
+  description String?  @db.Text
+  imageUrl    String?  @map("image_url")
+  category    String?  // temple, nature, cultural, landmark
+  mapUrl      String?  @map("map_url")
+  distance    String?  // ระยะทางจากสถานที่จัดงาน
+  highlight   String?  // จุดเด่น
+  sortOrder   Int      @default(0) @map("sort_order")
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("attractions")
+}
