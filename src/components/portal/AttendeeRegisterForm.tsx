@@ -385,34 +385,39 @@ export function AttendeeRegisterForm({
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-4 animate-fade-in">
         <Link href={isEditMode ? `/portal/registration/${attendee?.id}` : "/portal/dashboard"}>
-          <Button variant="ghost" size="icon" className="rounded-xl">
+          <Button variant="ghost" size="icon" className="rounded-xl hover:bg-kram-100 hover:text-kram-700 transition-colors">
             <ArrowLeft className="w-5 h-5" />
           </Button>
         </Link>
         <div>
-          <div className="inline-flex items-center gap-2 px-3 py-1 bg-kram-100 text-kram-700 text-sm font-medium rounded-full mb-2">
-            <Sparkles className="w-4 h-4" />
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-kram-100 to-cyan-100 text-kram-700 text-sm font-medium rounded-full mb-2 border border-kram-200/50">
+            <Sparkles className="w-4 h-4 text-kram-600" />
             {isEditMode ? "แก้ไขข้อมูล" : "ลงทะเบียนใหม่"}
           </div>
-          <h1 className="text-2xl font-bold text-kram-900">
+          <h1 className="text-2xl font-bold bg-gradient-to-r from-kram-900 via-kram-800 to-kram-900 bg-clip-text text-transparent">
             {isEditMode ? "แก้ไขข้อมูลผู้ลงทะเบียน" : "ลงทะเบียนเข้าร่วมประชุม"}
           </h1>
+          <p className="text-kram-500 mt-1 flex items-center gap-2">
+            <span className="w-1.5 h-1.5 rounded-full bg-cyan-500" />
+            กรุณากรอกข้อมูลให้ครบถ้วน
+          </p>
         </div>
       </div>
 
       {/* Error Alert */}
       {error && (
-        <div className="p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm">
-          {error}
+        <div className="flex items-center gap-3 p-4 bg-gradient-to-r from-red-50 to-orange-50 border border-red-200/50 rounded-xl text-red-700 text-sm animate-fade-in">
+          <AlertCircle className="w-5 h-5 flex-shrink-0" />
+          <span className="font-medium">{error}</span>
         </div>
       )}
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Section 1: Government Info */}
-        <Card className="border-0 shadow-lg shadow-kram-900/5">
-          <div className="h-1 bg-gradient-to-r from-slate-500 to-kram-500 rounded-t-lg" />
+        <Card className="border-0 bg-white/70 backdrop-blur-sm shadow-lg shadow-kram-900/5 overflow-hidden animate-fade-in [animation-delay:100ms]">
+          <div className="h-1 bg-gradient-to-r from-kram-500 via-slate-500 to-kram-500" />
           <CardHeader className="pb-4">
             <CardTitle className="flex items-center gap-3 text-lg text-kram-900">
               <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-slate-500 to-kram-500 flex items-center justify-center">
@@ -629,11 +634,11 @@ export function AttendeeRegisterForm({
         </Card>
 
         {/* Section 2: Registration Type */}
-        <Card className="border-0 shadow-lg shadow-kram-900/5">
-          <div className="h-1 bg-gradient-to-r from-violet-500 to-purple-500 rounded-t-lg" />
+        <Card className="border-0 bg-white/70 backdrop-blur-sm shadow-lg shadow-kram-900/5 overflow-hidden animate-fade-in [animation-delay:150ms]">
+          <div className="h-1 bg-gradient-to-r from-kram-600 via-cyan-500 to-kram-600" />
           <CardHeader className="pb-4">
             <CardTitle className="flex items-center gap-3 text-lg text-kram-900">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-purple-500 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-kram-600 to-cyan-600 flex items-center justify-center shadow-lg shadow-kram-500/20">
                 <Tag className="w-5 h-5 text-white" />
               </div>
               ประเภทการลงทะเบียน <span className="text-red-500">*</span>
@@ -645,10 +650,10 @@ export function AttendeeRegisterForm({
                 <label
                   key={type.id}
                   className={cn(
-                    "flex items-center gap-3 p-4 rounded-xl border-2 cursor-pointer transition-all",
+                    "flex items-center gap-3 p-4 rounded-xl border-2 cursor-pointer transition-all duration-200",
                     formData.regTypeId === String(type.id)
-                      ? "border-violet-500 bg-violet-50 text-violet-700"
-                      : "border-kram-200 hover:border-kram-300"
+                      ? "border-cyan-500 bg-gradient-to-r from-cyan-50 to-kram-50 text-kram-700 shadow-md shadow-cyan-500/10"
+                      : "border-kram-200 hover:border-cyan-300 hover:bg-cyan-50/30"
                   )}
                 >
                   <input
@@ -661,9 +666,9 @@ export function AttendeeRegisterForm({
                   />
                   <div
                     className={cn(
-                      "w-5 h-5 rounded-full border-2 flex items-center justify-center",
+                      "w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors",
                       formData.regTypeId === String(type.id)
-                        ? "border-violet-500 bg-violet-500"
+                        ? "border-cyan-500 bg-cyan-500"
                         : "border-kram-300"
                     )}
                   >
@@ -679,12 +684,12 @@ export function AttendeeRegisterForm({
         </Card>
 
         {/* Section 3: Personal Info */}
-        <Card className="border-0 shadow-lg shadow-kram-900/5">
-          <div className="h-1 bg-gradient-to-r from-kram-500 to-cyan-500 rounded-t-lg" />
+        <Card className="border-0 bg-white/70 backdrop-blur-sm shadow-lg shadow-kram-900/5 overflow-hidden animate-fade-in [animation-delay:200ms]">
+          <div className="h-1 bg-gradient-to-r from-kram-500 to-cyan-500" />
           <CardHeader className="pb-4">
             <CardTitle className="flex items-center gap-3 text-lg text-kram-900">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-kram-500 to-cyan-500 flex items-center justify-center">
-                <User className="w-5 h-5 text-white" />
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-kram-100 to-cyan-100 flex items-center justify-center">
+                <User className="w-5 h-5 text-kram-600" />
               </div>
               ข้อมูลส่วนตัว
             </CardTitle>
@@ -948,12 +953,12 @@ export function AttendeeRegisterForm({
         </Card>
 
         {/* Section 4: Contact */}
-        <Card className="border-0 shadow-lg shadow-kram-900/5">
-          <div className="h-1 bg-gradient-to-r from-cyan-500 to-teal-500 rounded-t-lg" />
+        <Card className="border-0 bg-white/70 backdrop-blur-sm shadow-lg shadow-kram-900/5 overflow-hidden animate-fade-in [animation-delay:250ms]">
+          <div className="h-1 bg-gradient-to-r from-cyan-500 to-teal-500" />
           <CardHeader className="pb-4">
             <CardTitle className="flex items-center gap-3 text-lg text-kram-900">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500 to-teal-500 flex items-center justify-center">
-                <Phone className="w-5 h-5 text-white" />
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-100 to-teal-100 flex items-center justify-center">
+                <Phone className="w-5 h-5 text-cyan-600" />
               </div>
               ข้อมูลติดต่อ
             </CardTitle>
@@ -1001,12 +1006,12 @@ export function AttendeeRegisterForm({
         </Card>
 
         {/* Section 5: Food */}
-        <Card className="border-0 shadow-lg shadow-kram-900/5">
-          <div className="h-1 bg-gradient-to-r from-amber-500 to-orange-500 rounded-t-lg" />
+        <Card className="border-0 bg-white/70 backdrop-blur-sm shadow-lg shadow-amber-500/10 overflow-hidden animate-fade-in [animation-delay:300ms]">
+          <div className="h-1 bg-gradient-to-r from-amber-500 to-orange-500" />
           <CardHeader className="pb-4">
             <CardTitle className="flex items-center gap-3 text-lg text-kram-900">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center">
-                <Utensils className="w-5 h-5 text-white" />
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-100 to-orange-100 flex items-center justify-center">
+                <Utensils className="w-5 h-5 text-amber-600" />
               </div>
               อาหาร
             </CardTitle>
@@ -1042,12 +1047,12 @@ export function AttendeeRegisterForm({
         </Card>
 
         {/* Section 6: Travel Type */}
-        <Card className="border-0 shadow-lg shadow-kram-900/5">
-          <div className="h-1 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-t-lg" />
+        <Card className="border-0 bg-white/70 backdrop-blur-sm shadow-lg shadow-emerald-500/10 overflow-hidden animate-fade-in [animation-delay:350ms]">
+          <div className="h-1 bg-gradient-to-r from-emerald-500 to-cyan-500" />
           <CardHeader className="pb-4">
             <CardTitle className="flex items-center gap-3 text-lg text-kram-900">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center">
-                <Car className="w-5 h-5 text-white" />
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-100 to-cyan-100 flex items-center justify-center">
+                <Car className="w-5 h-5 text-emerald-600" />
               </div>
               การเดินทาง
             </CardTitle>
@@ -1088,12 +1093,12 @@ export function AttendeeRegisterForm({
 
         {/* Section 7: Travel Details - Conditional */}
         {formData.vehicleType === "1" && (
-          <Card className="border-0 shadow-lg shadow-kram-900/5">
-            <div className="h-1 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-t-lg" />
+          <Card className="border-0 bg-white/70 backdrop-blur-sm shadow-lg shadow-kram-500/10 overflow-hidden animate-fade-in">
+            <div className="h-1 bg-gradient-to-r from-kram-500 to-cyan-500" />
             <CardHeader className="pb-4">
               <CardTitle className="flex items-center gap-3 text-lg text-kram-900">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-500 flex items-center justify-center">
-                  <Plane className="w-5 h-5 text-white" />
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-kram-100 to-cyan-100 flex items-center justify-center">
+                  <Plane className="w-5 h-5 text-kram-600" />
                 </div>
                 รายละเอียดการเดินทางโดยเครื่องบิน
               </CardTitle>
@@ -1331,12 +1336,12 @@ export function AttendeeRegisterForm({
 
         {/* Bus Travel Details */}
         {formData.vehicleType === "2" && (
-          <Card className="border-0 shadow-lg shadow-kram-900/5">
-            <div className="h-1 bg-gradient-to-r from-green-500 to-emerald-500 rounded-t-lg" />
+          <Card className="border-0 bg-white/70 backdrop-blur-sm shadow-lg shadow-emerald-500/10 overflow-hidden animate-fade-in">
+            <div className="h-1 bg-gradient-to-r from-emerald-500 to-green-500" />
             <CardHeader className="pb-4">
               <CardTitle className="flex items-center gap-3 text-lg text-kram-900">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-green-500 to-emerald-500 flex items-center justify-center">
-                  <Bus className="w-5 h-5 text-white" />
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-100 to-green-100 flex items-center justify-center">
+                  <Bus className="w-5 h-5 text-emerald-600" />
                 </div>
                 รายละเอียดการเดินทางโดยรถโดยสาร
               </CardTitle>
@@ -1467,12 +1472,12 @@ export function AttendeeRegisterForm({
 
         {/* Train Travel Details */}
         {formData.vehicleType === "4" && (
-          <Card className="border-0 shadow-lg shadow-kram-900/5">
-            <div className="h-1 bg-gradient-to-r from-purple-500 to-violet-500 rounded-t-lg" />
+          <Card className="border-0 bg-white/70 backdrop-blur-sm shadow-lg shadow-kram-500/10 overflow-hidden animate-fade-in">
+            <div className="h-1 bg-gradient-to-r from-kram-600 to-kram-400" />
             <CardHeader className="pb-4">
               <CardTitle className="flex items-center gap-3 text-lg text-kram-900">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-violet-500 flex items-center justify-center">
-                  <Train className="w-5 h-5 text-white" />
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-kram-100 to-kram-200 flex items-center justify-center">
+                  <Train className="w-5 h-5 text-kram-600" />
                 </div>
                 รายละเอียดการเดินทางโดยรถไฟ
               </CardTitle>
@@ -1600,12 +1605,12 @@ export function AttendeeRegisterForm({
         )}
 
         {/* Section 8: Accommodation */}
-        <Card className="border-0 shadow-lg shadow-kram-900/5">
-          <div className="h-1 bg-gradient-to-r from-rose-500 to-pink-500 rounded-t-lg" />
+        <Card className="border-0 bg-white/70 backdrop-blur-sm shadow-lg shadow-rose-500/10 overflow-hidden animate-fade-in [animation-delay:400ms]">
+          <div className="h-1 bg-gradient-to-r from-rose-500 to-pink-500" />
           <CardHeader className="pb-4">
             <CardTitle className="flex items-center gap-3 text-lg text-kram-900">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-rose-500 to-pink-500 flex items-center justify-center">
-                <Building2 className="w-5 h-5 text-white" />
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-rose-100 to-pink-100 flex items-center justify-center">
+                <Building2 className="w-5 h-5 text-rose-600" />
               </div>
               ที่พัก
             </CardTitle>
@@ -1728,11 +1733,10 @@ export function AttendeeRegisterForm({
 
         {/* Section 9: Payment Info */}
         <Card
-          className="border-0 shadow-lg shadow-kram-900/5"
-          style={{ backgroundColor: "rgba(1, 166, 229, 0.08)" }}
+          className="border-0 bg-gradient-to-br from-cyan-50/70 to-kram-50/70 backdrop-blur-sm shadow-lg shadow-cyan-500/10 overflow-hidden animate-fade-in [animation-delay:450ms]"
         >
           <div
-            className="h-1 rounded-t-lg"
+            className="h-1"
             style={{ background: "linear-gradient(to right, #01a6e5, #0088cc)" }}
           />
           <CardHeader className="pb-4">
@@ -1805,18 +1809,18 @@ export function AttendeeRegisterForm({
         </Card>
 
         {/* Section 10: Terms */}
-        <Card className="border-0 shadow-lg shadow-kram-900/5 bg-amber-50/50">
-          <div className="h-1 bg-gradient-to-r from-amber-500 to-yellow-500 rounded-t-lg" />
+        <Card className="border-0 bg-gradient-to-br from-amber-50/70 to-orange-50/50 backdrop-blur-sm shadow-lg shadow-amber-500/10 overflow-hidden animate-fade-in [animation-delay:500ms]">
+          <div className="h-1 bg-gradient-to-r from-amber-500 to-orange-500" />
           <CardHeader className="pb-4">
             <CardTitle className="flex items-center gap-3 text-lg text-amber-800">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-yellow-500 flex items-center justify-center">
-                <AlertCircle className="w-5 h-5 text-white" />
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-100 to-orange-100 flex items-center justify-center">
+                <AlertCircle className="w-5 h-5 text-amber-600" />
               </div>
               เงื่อนไขการประชุม
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="p-4 bg-white rounded-xl border border-amber-200">
+            <div className="p-4 bg-white/80 rounded-xl border border-amber-200/50">
               <p className="text-amber-800 text-sm">
                 หลังจากแจ้งชำระเงินแล้ว จะสามารถแก้ไขข้อมูลได้เฉพาะ{" "}
                 <span className="font-semibold">
@@ -1828,16 +1832,16 @@ export function AttendeeRegisterForm({
         </Card>
 
         {/* Submit Button */}
-        <div className="flex justify-end gap-4 pt-4">
+        <div className="flex justify-end gap-4 pt-4 animate-fade-in [animation-delay:550ms]">
           <Link href={isEditMode ? `/portal/registration/${attendee?.id}` : "/portal/dashboard"}>
-            <Button type="button" variant="outline" className="rounded-xl">
+            <Button type="button" variant="outline" className="rounded-xl border-kram-200 hover:bg-kram-50 hover:border-kram-300 transition-colors">
               ยกเลิก
             </Button>
           </Link>
           <Button
             type="submit"
             disabled={isLoading}
-            className="bg-gradient-to-r from-kram-600 to-cyan-600 hover:from-kram-700 hover:to-cyan-700 rounded-xl px-8"
+            className="bg-gradient-to-r from-kram-600 to-cyan-600 hover:from-kram-700 hover:to-cyan-700 text-white shadow-lg shadow-kram-500/20 hover:shadow-xl hover:shadow-kram-500/30 transition-all duration-300 rounded-xl px-8"
           >
             {isLoading ? (
               <>

@@ -7,25 +7,29 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// ==================== Master Tables ====================
+// ==================== Master Tables (ตารางข้อมูลหลัก) ====================
 
+/// เขตสุขภาพ - ใช้จัดกลุ่มโรงพยาบาลตามเขตสุขภาพ (เขต 1-13 + กทม.)
+/// ใช้ใน: AttendeeSearch, ReportsClient สำหรับ cascade filter
 model Zone {
-  id       String     @id @default(cuid())
-  code     String     @unique // Z01, Z02, etc.
-  name     String // เขตสุขภาพที่ 1
+  id        String     @id @default(cuid())
+  code      String     @unique /// รหัสเขต เช่น "Z01", "Z02", "ZBK" (กรุงเทพฯ)
+  name      String                /// ชื่อเขต เช่น "เขตสุขภาพที่ 1", "กรุงเทพมหานคร"
   hospitals Hospital[]
 
   @@map("zones")
 }
 
+/// โรงพยาบาล/สถานที่ปฏิบัติงาน - ข้อมูลหลักของหน่วยงานที่ผู้ลงทะเบียนสังกัด
+/// ใช้ใน: ลงทะเบียน, ค้นหา, รายงาน, สถิติ
 model Hospital {
-  id           String   @id @default(cuid())
-  code         String   @unique // H001, H002, etc.
-  hospitalType String?  @map("hospital_type") // A, B, etc.
-  name         String // รพ.นครพิงค์
-  province     String?
-  zoneCode     String?  @map("zone_code")
-  zone         Zone?    @relation(fields: [zoneCode], references: [code])
+  id           String     @id @default(cuid())
+  code         String     @unique /// รหัสโรงพยาบาล เช่น "H001", "H002" - ใช้เป็น FK ใน attendees, members
+  hospitalType String?    @map("hospital_type") /// ประเภทโรงพยาบาล เช่น "A" = รพศ., "B" = รพท., "C" = รพช.
+  name         String                           /// ชื่อโรงพยาบาล เช่น "โรงพยาบาลน่าน"
+  province     String?                          /// จังหวัดที่ตั้ง เช่น "น่าน" - ใช้ใน cascade filter จังหวัด
+  zoneCode     String?    @map("zone_code")     /// FK ไปยัง Zone.code - ใช้จัดกลุ่มตามเขตสุขภาพ
+  zone         Zone?      @relation(fields: [zoneCode], references: [code])
   members      Member[]
   attendees    Attendee[]
   carnivals    Carnival[]
@@ -33,168 +37,188 @@ model Hospital {
   @@map("hospitals")
 }
 
+/// ระดับตำแหน่ง - ใช้ระบุระดับของผู้ลงทะเบียน (เชี่ยวชาญ, ชำนาญการพิเศษ, ชำนาญการ ฯลฯ)
+/// ใช้ใน: ฟอร์มลงทะเบียน, รายงานประเภทตำแหน่ง, Excel export
 model Level {
-  id     String  @id @default(cuid())
-  code   String  @unique // L01, L02, etc.
-  group  String? // กลุ่มบริหาร
-  name   String  // ระดับสูง
-  status Int     @default(1)
+  id        String     @id @default(cuid())
+  code      String     @unique /// รหัสระดับ เช่น "L01", "L02"
+  group     String?              /// กลุ่มตำแหน่ง เช่น "กลุ่มบริหาร", "กลุ่มวิชาการ" - ใช้ใน cascade filter ประเภทตำแหน่ง→ระดับ
+  name      String               /// ชื่อระดับ เช่น "ระดับสูง", "ระดับเชี่ยวชาญ", "ระดับชำนาญการพิเศษ"
+  status    Int        @default(1) /// สถานะ: 1 = ใช้งาน, 0 = ไม่ใช้งาน
   attendees Attendee[]
 
   @@map("levels")
 }
 
+/// วิชาชีพ - ประเภทวิชาชีพของผู้ลงทะเบียน
+/// ใช้ใน: ฟอร์มลงทะเบียน, รายงาน, สถิติ
 model Position {
-  id   String @id @default(cuid())
-  code String @unique // 1, 2, 3, etc. (originally jid)
-  name String // แพทย์, พยาบาล, etc.
+  id        String     @id @default(cuid())
+  code      String     @unique /// รหัสวิชาชีพ เช่น "1", "2", "3"
+  name      String               /// ชื่อวิชาชีพ เช่น "แพทย์", "พยาบาล", "เภสัชกร", "นักวิชาการสาธารณสุข"
   attendees Attendee[]
 
   @@map("positions")
 }
 
+/// ประเภทผู้ลงทะเบียน - จำแนกประเภทผู้เข้าร่วมประชุม
+/// ใช้ใน: คำนวณค่าลงทะเบียน (regTypeId=6 คือผู้ติดตาม มีราคาต่างกัน), รายงาน, สถิติ Pie Chart
 model RegType {
-  id   Int    @id @default(autoincrement())
-  name String // ผู้บริหารระดับ กระทรวง/เขต
+  id        Int        @id @default(autoincrement())
+  name      String /// ชื่อประเภท เช่น "ผู้บริหารระดับกระทรวง/เขต", "บุคลากร รพ.", "ผู้ติดตาม" (id=6)
   attendees Attendee[]
 
   @@map("reg_types")
 }
 
+/// สายการบิน - รายชื่อสายการบินสำหรับเลือกในฟอร์มลงทะเบียน
+/// ใช้ใน: dropdown เลือกสายการบินขาไป/ขากลับ
 model Airline {
-  id     Int     @id @default(autoincrement())
-  name   String // บางกอกแอร์เวย์
-  status String  @default("y") // y = active, n = inactive
+  id     Int    @id @default(autoincrement())
+  name   String /// ชื่อสายการบิน เช่น "Thai Airways", "Nok Air", "Air Asia"
+  status String @default("y") /// สถานะ: "y" = แสดงใน dropdown, "n" = ซ่อน
 
   @@map("airlines")
 }
 
+/// โรงแรม - รายชื่อโรงแรมที่พักสำหรับผู้เข้าร่วมประชุม
+/// ใช้ใน: ฟอร์มลงทะเบียน (เลือกโรงแรม), รายงานประเภทโรงแรม
 model Hotel {
   id        Int        @id @default(autoincrement())
-  name      String
-  phone     String?
-  website   String?
-  mapUrl    String?    @map("map_url")
-  busFlag   String     @default("Y") @map("bus_flag")
-  status    String     @default("y")
+  name      String /// ชื่อโรงแรม เช่น "โรงแรมเทวราช", "โรงแรมน่านตรึงใจ"
+  phone     String?                         /// เบอร์โทรติดต่อ
+  website   String?                         /// เว็บไซต์โรงแรม
+  mapUrl    String?    @map("map_url")      /// ลิงก์ Google Maps
+  busFlag   String     @default("Y") @map("bus_flag") /// "Y" = มีรถรับส่ง, "N" = ไม่มี
+  status    String     @default("y")        /// สถานะ: "y" = แสดงใน dropdown, "n" = ซ่อน (ใช้ใน reports page.tsx)
   attendees Attendee[]
 
   @@map("hotels")
 }
 
-// ==================== User & Auth ====================
+// ==================== User & Auth (ผู้ใช้งานและการยืนยันตัวตน) ====================
 
+/// สมาชิก/ผู้ใช้งานระบบ - ตัวแทนโรงพยาบาลหรือ Admin ที่ล็อกอินเข้าระบบ
+/// ใช้ใน: NextAuth authentication, ตรวจสอบสิทธิ์การเข้าถึง
 model Member {
   id           Int       @id @default(autoincrement())
-  email        String    @unique
-  password     String
-  hospitalCode String?   @map("hospital_code")
+  email        String    @unique /// อีเมลสำหรับล็อกอิน - ต้องไม่ซ้ำกัน
+  password     String                             /// รหัสผ่าน (hashed)
+  hospitalCode String?   @map("hospital_code")    /// FK ไปยัง Hospital.code - โรงพยาบาลที่สังกัด (null สำหรับ admin)
   hospital     Hospital? @relation(fields: [hospitalCode], references: [code])
-  memberType   Int       @default(1) @map("member_type") // 99 = admin, 1 = user
+  memberType   Int       @default(1) @map("member_type") /// ประเภทสมาชิก: 99 = Admin (เห็นทุกโรงพยาบาล), 1 = ตัวแทนโรงพยาบาล (เห็นเฉพาะของตัวเอง)
   createdAt    DateTime  @default(now()) @map("created_at")
   updatedAt    DateTime  @updatedAt @map("updated_at")
-  attendees    Attendee[]
-  finances     Finance[]
+  attendees    Attendee[] /// ผู้ลงทะเบียนที่สร้างโดยสมาชิกคนนี้
+  finances     Finance[]  /// รายการแจ้งชำระเงินที่สร้างโดยสมาชิกคนนี้
 
   @@map("members")
 }
 
-// ==================== Registration ====================
+// ==================== Registration (การลงทะเบียน) ====================
 
+/// ผู้ลงทะเบียนเข้าร่วมประชุม - ตารางหลักของระบบ
+/// ใช้ใน: ทุกหน้าของ Portal - ลงทะเบียน, ตรวจสอบ, ชำระเงิน, รายงาน, สถิติ
 model Attendee {
-  id              Int       @id @default(autoincrement())
-  hospitalCode    String?   @map("hospital_code")
-  hospital        Hospital? @relation(fields: [hospitalCode], references: [code])
-  regTypeId       Int?      @map("reg_type_id")
-  regType         RegType?  @relation(fields: [regTypeId], references: [id])
+  id           Int       @id @default(autoincrement())
+  hospitalCode String?   @map("hospital_code")    /// FK ไปยัง Hospital.code - โรงพยาบาลที่สังกัด
+  hospital     Hospital? @relation(fields: [hospitalCode], references: [code])
+  regTypeId    Int?      @map("reg_type_id")      /// FK ไปยัง RegType.id - ประเภทผู้ลงทะเบียน (6=ผู้ติดตาม มีค่าลงทะเบียนต่างกัน)
+  regType      RegType?  @relation(fields: [regTypeId], references: [id])
 
-  // Personal Info
-  prefix          String?   // นาย, นาง, นางสาว
-  firstName       String?   @map("first_name")
-  lastName        String?   @map("last_name")
-  positionCode    String?   @map("position_code")
-  position        Position? @relation(fields: [positionCode], references: [code])
-  positionOther   String?   @map("position_other")
-  gpCode          String?   @map("gp_code")
-  gpOther         String?   @map("gp_other")
-  levelCode       String?   @map("level_code")
-  level           Level?    @relation(fields: [levelCode], references: [code])
+  // ข้อมูลส่วนบุคคล
+  prefix       String? /// คำนำหน้า: "นาย", "นาง", "นางสาว", "พล.อ.", "นพ." ฯลฯ
+  firstName    String?   @map("first_name")       /// ชื่อจริง
+  lastName     String?   @map("last_name")        /// นามสกุล
+  positionCode String?   @map("position_code")    /// FK ไปยัง Position.code - วิชาชีพ
+  position     Position? @relation(fields: [positionCode], references: [code])
+  positionOther String?  @map("position_other")   /// วิชาชีพอื่นๆ (กรณีเลือก "อื่นๆ")
+  gpCode       String?   @map("gp_code")          /// รหัสกลุ่มงาน (ไม่ได้ใช้งานในปัจจุบัน)
+  gpOther      String?   @map("gp_other")         /// กลุ่มงานอื่นๆ
+  levelCode    String?   @map("level_code")       /// FK ไปยัง Level.code - ระดับตำแหน่ง
+  level        Level?    @relation(fields: [levelCode], references: [code])
 
-  // Contact
-  phone           String?
-  email           String?
-  line            String?
+  // ข้อมูลติดต่อ
+  phone String? /// เบอร์โทรศัพท์
+  email String? /// อีเมล
+  line  String? /// Line ID
 
-  // Preferences
-  foodType        Int?      @map("food_type") // 1 = ปกติ, 2 = มังสวิรัติ, etc.
-  vehicleType     Int?      @map("vehicle_type") // 1 = เครื่องบิน, 2 = รถบัส, etc.
+  // ความต้องการพิเศษ
+  foodType    Int? @map("food_type")    /// ประเภทอาหาร: 1=ทั่วไป, 2=อิสลาม, 3=มังสวิรัติ, 4=เจ
+  vehicleType Int? @map("vehicle_type") /// ประเภทการเดินทาง: 1=เครื่องบิน, 2=รถโดยสาร, 3=รถส่วนตัว/ราชการ, 4=รถไฟ
 
-  // Air Travel - Arrival
-  airDate1        DateTime? @map("air_date_1")
-  airline1        String?
-  flightNo1       String?   @map("flight_no_1")
-  airTime1        DateTime? @map("air_time_1")
+  // การเดินทางโดยเครื่องบิน - ขาไป
+  airDate1  DateTime? @map("air_date_1")  /// วันที่เดินทางมา (เครื่องบิน)
+  airline1  String?                        /// สายการบินขาไป
+  flightNo1 String?   @map("flight_no_1") /// เลขที่เที่ยวบินขาไป
+  airTime1  DateTime? @map("air_time_1")  /// เวลาถึง (เก็บเฉพาะเวลา)
 
-  // Air Travel - Departure
-  airDate2        DateTime? @map("air_date_2")
-  airline2        String?
-  flightNo2       String?   @map("flight_no_2")
-  airTime2        DateTime? @map("air_time_2")
-  airShuttle      Int?      @map("air_shuttle") // 1 = ต้องการ, 2 = ไม่ต้องการ
+  // การเดินทางโดยเครื่องบิน - ขากลับ
+  airDate2   DateTime? @map("air_date_2")  /// วันที่เดินทางกลับ (เครื่องบิน)
+  airline2   String?                        /// สายการบินขากลับ
+  flightNo2  String?   @map("flight_no_2") /// เลขที่เที่ยวบินขากลับ
+  airTime2   DateTime? @map("air_time_2")  /// เวลาออก (เก็บเฉพาะเวลา)
+  airShuttle Int?      @map("air_shuttle") /// ต้องการรถรับ-ส่งสนามบิน: 1=ต้องการ, 2=ไม่ต้องการ
 
-  // Bus Travel
-  busDate1        DateTime? @map("bus_date_1")
-  busLine1        String?   @map("bus_line_1")
-  busTime1        DateTime? @map("bus_time_1")
-  busDate2        DateTime? @map("bus_date_2")
-  busLine2        String?   @map("bus_line_2")
-  busTime2        DateTime? @map("bus_time_2")
-  busShuttle      Int?      @map("bus_shuttle")
+  // การเดินทางโดยรถโดยสาร - ขาไป
+  busDate1 DateTime? @map("bus_date_1") /// วันที่เดินทางมา (รถบัส)
+  busLine1 String?   @map("bus_line_1") /// เส้นทาง/เที่ยวรถขาไป
+  busTime1 DateTime? @map("bus_time_1") /// เวลาถึง
 
-  // Train Travel
-  trainDate1      DateTime? @map("train_date_1")
-  trainLine1      String?   @map("train_line_1")
-  trainTime1      DateTime? @map("train_time_1")
-  trainDate2      DateTime? @map("train_date_2")
-  trainLine2      String?   @map("train_line_2")
-  trainTime2      DateTime? @map("train_time_2")
-  trainShuttle    Int?      @map("train_shuttle")
+  // การเดินทางโดยรถโดยสาร - ขากลับ
+  busDate2   DateTime? @map("bus_date_2")   /// วันที่เดินทางกลับ (รถบัส)
+  busLine2   String?   @map("bus_line_2")   /// เส้นทาง/เที่ยวรถขากลับ
+  busTime2   DateTime? @map("bus_time_2")   /// เวลาออก
+  busShuttle Int?      @map("bus_shuttle")  /// ต้องการรถรับ-ส่งสถานีรถ (ไม่ได้ใช้งานในปัจจุบัน)
 
-  // Accommodation
-  hotelId         Int?      @map("hotel_id")
-  hotel           Hotel?    @relation(fields: [hotelId], references: [id])
-  hotelOther      String?   @map("hotel_other")
-  busToMeet       Int?      @map("bus_to_meet") // 1 = ต้องการรถรับ-ส่ง, 2 = ไม่ต้องการ
+  // การเดินทางโดยรถไฟ - ขาไป
+  trainDate1 DateTime? @map("train_date_1") /// วันที่เดินทางมา (รถไฟ)
+  trainLine1 String?   @map("train_line_1") /// ขบวนรถไฟขาไป
+  trainTime1 DateTime? @map("train_time_1") /// เวลาถึง
 
-  // Status & Audit
-  status          Int       @default(1) // 1 = ค้างชำระ, 2 = รอตรวจสอบ, 3 = ยกเลิก, 9 = ชำระแล้ว
-  createdBy       Int?      @map("created_by")
+  // การเดินทางโดยรถไฟ - ขากลับ
+  trainDate2   DateTime? @map("train_date_2")   /// วันที่เดินทางกลับ (รถไฟ)
+  trainLine2   String?   @map("train_line_2")   /// ขบวนรถไฟขากลับ
+  trainTime2   DateTime? @map("train_time_2")   /// เวลาออก
+  trainShuttle Int?      @map("train_shuttle")  /// ต้องการรถรับ-ส่งสถานีรถไฟ (ไม่ได้ใช้งานในปัจจุบัน)
+
+  // ที่พัก
+  hotelId    Int?    @map("hotel_id")    /// FK ไปยัง Hotel.id - โรงแรมที่เลือก
+  hotel      Hotel?  @relation(fields: [hotelId], references: [id])
+  hotelOther String? @map("hotel_other") /// โรงแรมอื่นๆ (กรณีไม่เลือกจากรายการ)
+  busToMeet  Int?    @map("bus_to_meet") /// ต้องการรถรับ-ส่งจากที่พักไปสถานที่ประชุม: 1=ต้องการ, 2=ไม่ต้องการ
+
+  // สถานะและการตรวจสอบ
+  status          Int       @default(1) /// สถานะการชำระเงิน: 1=ค้างชำระ, 2=รอตรวจสอบ, 3=ยกเลิก, 9=ชำระแล้ว
+  createdBy       Int?      @map("created_by")      /// FK ไปยัง Member.id - สร้างโดยสมาชิกคนใด
   createdByMember Member?   @relation(fields: [createdBy], references: [id])
   createdAt       DateTime  @default(now()) @map("created_at")
   updatedAt       DateTime? @updatedAt @map("updated_at")
-  cancelledBy     Int?      @map("cancelled_by")
+  cancelledBy     Int?      @map("cancelled_by")    /// FK ไปยัง Member.id - ยกเลิกโดยใคร (ถ้ามี)
 
   @@map("attendees")
 }
 
+/// ผู้ลงทะเบียนงานเลี้ยง (Carnival/Gala Dinner) - แยกจากการประชุมหลัก
+/// ใช้ใน: ฟอร์มลงทะเบียนงานเลี้ยง (ถ้ามี)
 model Carnival {
   id           Int       @id @default(autoincrement())
-  hospitalCode String?   @map("hospital_code")
+  hospitalCode String?   @map("hospital_code")    /// FK ไปยัง Hospital.code
   hospital     Hospital? @relation(fields: [hospitalCode], references: [code])
-  prefix       String?
-  firstName    String?   @map("first_name")
-  lastName     String?   @map("last_name")
-  phone        String?
-  email        String?
-  line         String?
-  busToMeet    Int?      @map("bus_to_meet")
-  hotel1       String?
-  hotel2       String?
-  hotel3       String?
-  hotel4       String?
-  hotel5       String?
-  hotel6       String?
-  hotel7       String?
+  prefix       String?                            /// คำนำหน้า
+  firstName    String?   @map("first_name")       /// ชื่อจริง
+  lastName     String?   @map("last_name")        /// นามสกุล
+  phone        String?                            /// เบอร์โทร
+  email        String?                            /// อีเมล
+  line         String?                            /// Line ID
+  busToMeet    Int?      @map("bus_to_meet")      /// ต้องการรถรับ-ส่ง
+  hotel1       String?                            /// วันที่ 1 พักโรงแรม
+  hotel2       String?                            /// วันที่ 2 พักโรงแรม
+  hotel3       String?                            /// วันที่ 3 พักโรงแรม
+  hotel4       String?                            /// วันที่ 4 พักโรงแรม
+  hotel5       String?                            /// วันที่ 5 พักโรงแรม
+  hotel6       String?                            /// วันที่ 6 พักโรงแรม
+  hotel7       String?                            /// วันที่ 7 พักโรงแรม
   createdBy    Int?      @map("created_by")
   createdAt    DateTime  @default(now()) @map("created_at")
   updatedBy    Int?      @map("updated_by")
@@ -203,119 +227,135 @@ model Carnival {
   @@map("carnivals")
 }
 
-// ==================== Finance ====================
+// ==================== Finance (การเงิน) ====================
 
+/// การแจ้งชำระเงิน - บันทึกการอัปโหลดหลักฐานการโอนเงิน
+/// ใช้ใน: /portal/payment (แจ้งชำระ), /portal/payment-status (Admin ตรวจสอบ)
 model Finance {
-  id              Int       @id @default(autoincrement())
-  memberId        Int?      @map("member_id")
-  member          Member?   @relation(fields: [memberId], references: [id])
-  attendeeIds     String?   @map("attendee_ids") // comma-separated attendee IDs
-  fileName        String?   @map("file_name")
-  status          Int       @default(1) // 1 = รอตรวจสอบ, 2 = ผ่าน, 9 = ไม่ผ่าน
-  createdAt       DateTime  @default(now()) @map("created_at")
-  confirmedBy     Int?      @map("confirmed_by")
-  confirmedAt     DateTime? @map("confirmed_at")
-  paidDate        DateTime? @map("paid_date")
+  id          Int       @id @default(autoincrement())
+  memberId    Int?      @map("member_id")     /// FK ไปยัง Member.id - แจ้งชำระโดยสมาชิกคนใด
+  member      Member?   @relation(fields: [memberId], references: [id])
+  attendeeIds String?   @map("attendee_ids")  /// รายการ attendee IDs ที่รวมในการชำระครั้งนี้ (comma-separated เช่น "1,2,3")
+  fileName    String?   @map("file_name")     /// path ไฟล์หลักฐานการโอนเงิน เช่น "/uploads/slip_xxx.jpg"
+  status      Int       @default(1)           /// สถานะ: 1=รอตรวจสอบ, 2=ผ่าน (ชำระสำเร็จ), 9=ไม่ผ่าน (ปฏิเสธ)
+  createdAt   DateTime  @default(now()) @map("created_at") /// วันที่แจ้งชำระ
+  confirmedBy Int?      @map("confirmed_by")  /// FK ไปยัง Member.id (Admin) - ตรวจสอบโดยใคร
+  confirmedAt DateTime? @map("confirmed_at")  /// วันเวลาที่ Admin ตรวจสอบ
+  paidDate    DateTime? @map("paid_date")     /// วันที่โอนเงินจริง (กรอกโดยผู้แจ้งชำระ)
 
   @@map("finances")
 }
 
-// ==================== Settings ====================
+// ==================== Settings (การตั้งค่าระบบ) ====================
 
+/// การตั้งค่าระบบ - ค่าคงที่ต่างๆ ของงานประชุม
+/// ใช้ใน: คำนวณค่าลงทะเบียน, แสดงข้อมูลบัญชีธนาคาร
 model Setting {
-  id                  Int      @id @default(autoincrement())
-  name                String?  // ชื่องาน
-  airlineStation      String?  @map("airline_station")
-  accountName         String?  @map("account_name")
-  accountBank         String?  @map("account_bank")
-  accountNo           String?  @map("account_no")
-  meetPrice           Decimal? @map("meet_price") @db.Decimal(10, 2)
-  condition1          String?  @db.Text
-  condition2          String?  @db.Text
-  accountFollowName   String?  @map("account_follow_name")
-  accountFollowBank   String?  @map("account_follow_bank")
-  accountFollowNo     String?  @map("account_follow_no")
-  meetPriceFollow     Decimal? @map("meet_price_follow") @db.Decimal(10, 2)
+  id                Int      @id @default(autoincrement())
+  name              String?                                     /// ชื่องานประชุม
+  airlineStation    String?  @map("airline_station")            /// สนามบินที่ใช้ (ไม่ได้ใช้งานในปัจจุบัน)
+  accountName       String?  @map("account_name")               /// ชื่อบัญชีรับโอนเงิน
+  accountBank       String?  @map("account_bank")               /// ธนาคาร
+  accountNo         String?  @map("account_no")                 /// เลขที่บัญชี
+  meetPrice         Decimal? @map("meet_price") @db.Decimal(10, 2) /// ค่าลงทะเบียนปกติ (บาท) - ใช้คำนวณยอดชำระ
+  condition1        String?  @db.Text                           /// เงื่อนไขการชำระเงิน (HTML) - แสดงในหน้า /portal/payment
+  condition2        String?  @db.Text                           /// เงื่อนไขเพิ่มเติม
+  accountFollowName String?  @map("account_follow_name")        /// ชื่อบัญชีสำหรับผู้ติดตาม (ถ้าแยกบัญชี)
+  accountFollowBank String?  @map("account_follow_bank")        /// ธนาคารสำหรับผู้ติดตาม
+  accountFollowNo   String?  @map("account_follow_no")          /// เลขที่บัญชีสำหรับผู้ติดตาม
+  meetPriceFollow   Decimal? @map("meet_price_follow") @db.Decimal(10, 2) /// ค่าลงทะเบียนผู้ติดตาม (บาท) - ใช้กับ regTypeId=6
 
   @@map("settings")
 }
 
-// ==================== Landing Page Content ====================
+// ==================== Landing Page Content (เนื้อหาหน้าแรก) ====================
 
+/// สไลด์โชว์ - รูปภาพสไลด์บนหน้าแรก
+/// ใช้ใน: Landing Page - Hero Section
 model Slideshow {
   id        Int      @id @default(autoincrement())
-  title     String?
-  imageUrl  String   @map("image_url")
-  linkUrl   String?  @map("link_url")
-  sortOrder Int      @default(0) @map("sort_order")
-  isActive  Boolean  @default(true) @map("is_active")
+  title     String?                              /// หัวข้อ/คำอธิบายรูป
+  imageUrl  String   @map("image_url")           /// URL รูปภาพ
+  linkUrl   String?  @map("link_url")            /// ลิงก์เมื่อคลิกรูป (ถ้ามี)
+  sortOrder Int      @default(0) @map("sort_order") /// ลำดับการแสดง (น้อย→มาก)
+  isActive  Boolean  @default(true) @map("is_active") /// แสดง/ซ่อน
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
   @@map("slideshows")
 }
 
+/// ข่าวสาร - ประกาศและข่าวสารบนหน้าแรก
+/// ใช้ใน: Landing Page - News Section
 model News {
   id          Int      @id @default(autoincrement())
-  title       String
-  content     String   @db.Text
-  imageUrl    String?  @map("image_url")
-  isPublished Boolean  @default(true) @map("is_published")
-  publishedAt DateTime @default(now()) @map("published_at")
+  title       String                               /// หัวข้อข่าว
+  content     String   @db.Text                    /// เนื้อหาข่าว (HTML)
+  imageUrl    String?  @map("image_url")           /// รูปประกอบข่าว
+  isPublished Boolean  @default(true) @map("is_published") /// เผยแพร่หรือไม่
+  publishedAt DateTime @default(now()) @map("published_at") /// วันที่เผยแพร่
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
   @@map("news")
 }
 
+/// กำหนดการ - รายการกิจกรรมในแต่ละวันของงานประชุม
+/// ใช้ใน: Landing Page - Schedule Section (Timeline)
 model Schedule {
   id          Int      @id @default(autoincrement())
-  dayNumber   Int      @map("day_number") // วันที่ 1, 2, 3
-  date        DateTime
-  startTime   String   @map("start_time") // "08:00"
-  endTime     String   @map("end_time")   // "09:00"
-  title       String
-  description String?  @db.Text
-  location    String?
-  speaker     String?
-  sortOrder   Int      @default(0) @map("sort_order")
+  dayNumber   Int      @map("day_number")           /// วันที่: 1, 2, 3 ฯลฯ - ใช้จัดกลุ่มเป็น tab
+  date        DateTime                               /// วันที่จริง เช่น 2025-02-15
+  startTime   String   @map("start_time")           /// เวลาเริ่ม เช่น "08:00"
+  endTime     String   @map("end_time")             /// เวลาสิ้นสุด เช่น "09:00"
+  title       String                                 /// หัวข้อกิจกรรม
+  description String?  @db.Text                     /// รายละเอียด (HTML)
+  location    String?                                /// สถานที่
+  speaker     String?                                /// วิทยากร
+  sortOrder   Int      @default(0) @map("sort_order") /// ลำดับการแสดง (น้อย→มาก)
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
   @@map("schedules")
 }
 
+/// ข้อมูล Footer - ข้อมูลติดต่อและรายละเอียดผู้จัดงาน
+/// ใช้ใน: Landing Page - Footer Section
 model FooterInfo {
   id        Int      @id @default(autoincrement())
-  key       String   @unique // organizer_name, address, phone, email, etc.
-  value     String   @db.Text
+  key       String   @unique /// key สำหรับเรียกใช้ เช่น "organizer_name", "address", "phone", "email", "facebook"
+  value     String   @db.Text /// ค่าที่ต้องการแสดง
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
   @@map("footer_info")
 }
 
+/// การตั้งค่าเว็บไซต์ - Logo และ URL ต่างๆ
+/// ใช้ใน: Navbar, Footer, ลิงก์ดาวน์โหลดเอกสาร
 model SiteConfig {
   id             Int      @id @default(autoincrement())
-  logoUrl        String?  @map("logo_url")
-  googleDriveUrl String?  @map("google_drive_url")
+  logoUrl        String?  @map("logo_url")        /// URL โลโก้งาน
+  googleDriveUrl String?  @map("google_drive_url") /// ลิงก์ Google Drive สำหรับดาวน์โหลดเอกสาร
   createdAt      DateTime @default(now()) @map("created_at")
   updatedAt      DateTime @updatedAt @map("updated_at")
 
   @@map("site_config")
 }
 
+/// สถานที่ท่องเที่ยว - แนะนำสถานที่ท่องเที่ยวใกล้เคียง
+/// ใช้ใน: Landing Page - Attractions Section
 model Attraction {
   id          Int      @id @default(autoincrement())
-  name        String
-  description String?  @db.Text
-  imageUrl    String?  @map("image_url")
-  category    String?  // temple, nature, cultural, landmark
-  mapUrl      String?  @map("map_url")
-  distance    String?  // ระยะทางจากสถานที่จัดงาน
-  highlight   String?  // จุดเด่น
-  sortOrder   Int      @default(0) @map("sort_order")
-  isActive    Boolean  @default(true) @map("is_active")
+  name        String                                 /// ชื่อสถานที่
+  description String?  @db.Text                     /// รายละเอียด
+  imageUrl    String?  @map("image_url")            /// รูปภาพ
+  category    String?                                /// หมวดหมู่: "temple"=วัด, "nature"=ธรรมชาติ, "cultural"=วัฒนธรรม, "landmark"=สถานที่สำคัญ
+  mapUrl      String?  @map("map_url")              /// ลิงก์ Google Maps
+  distance    String?                                /// ระยะทางจากสถานที่จัดงาน เช่น "2.5 กม."
+  highlight   String?                                /// จุดเด่น/สิ่งที่น่าสนใจ
+  sortOrder   Int      @default(0) @map("sort_order") /// ลำดับการแสดง
+  isActive    Boolean  @default(true) @map("is_active") /// แสดง/ซ่อน
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 

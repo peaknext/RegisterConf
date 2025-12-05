@@ -13,6 +13,7 @@ import {
   PieChart,
   Pie,
   Cell,
+  LabelList,
 } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -380,7 +381,15 @@ export function StatsClient({
                 name="ค้างชำระ"
                 stackId="a"
                 fill={STATUS_COLORS.pending}
-              />
+              >
+                <LabelList
+                  dataKey="total"
+                  position="top"
+                  fill="#374151"
+                  fontSize={11}
+                  fontWeight={600}
+                />
+              </Bar>
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -419,44 +428,50 @@ export function StatsClient({
           </Select>
         }
       >
-        <div className="h-96">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart
-              data={filteredHospitalData}
-              layout="vertical"
-              margin={{ left: 120 }}
-            >
-              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-              <XAxis type="number" tick={{ fontSize: 12 }} />
-              <YAxis
-                dataKey="name"
-                type="category"
-                tick={{ fontSize: 11 }}
-                width={110}
-              />
-              <Tooltip content={<StackedBarTooltip />} />
-              <Legend />
-              <Bar
-                dataKey="paid"
-                name="ชำระสำเร็จ"
-                stackId="a"
-                fill={STATUS_COLORS.paid}
-              />
-              <Bar
-                dataKey="reviewing"
-                name="รอตรวจสอบ"
-                stackId="a"
-                fill={STATUS_COLORS.reviewing}
-              />
-              <Bar
-                dataKey="pending"
-                name="ค้างชำระ"
-                stackId="a"
-                fill={STATUS_COLORS.pending}
-              />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
+        <ResponsiveContainer width="100%" height={450}>
+          <BarChart
+            data={filteredHospitalData}
+            margin={{ top: 20, right: 20, left: 20, bottom: 80 }}
+          >
+            <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+            <XAxis
+              dataKey="name"
+              tick={{
+                fontSize:
+                  filteredHospitalData.length > 30
+                    ? 8
+                    : filteredHospitalData.length > 15
+                    ? 9
+                    : 10,
+                angle: -45,
+                textAnchor: "end",
+              } as object}
+              interval={0}
+              height={70}
+            />
+            <YAxis tick={{ fontSize: 12 }} />
+            <Tooltip content={<StackedBarTooltip />} />
+            <Legend />
+            <Bar
+              dataKey="paid"
+              name="ชำระสำเร็จ"
+              stackId="a"
+              fill={STATUS_COLORS.paid}
+            />
+            <Bar
+              dataKey="reviewing"
+              name="รอตรวจสอบ"
+              stackId="a"
+              fill={STATUS_COLORS.reviewing}
+            />
+            <Bar
+              dataKey="pending"
+              name="ค้างชำระ"
+              stackId="a"
+              fill={STATUS_COLORS.pending}
+            />
+          </BarChart>
+        </ResponsiveContainer>
       </ChartCard>
 
       {/* Row: RegType (Donut) + Position (Bar) */}
@@ -481,10 +496,43 @@ export function StatsClient({
                   outerRadius={100}
                   paddingAngle={2}
                   dataKey="value"
-                  label={({ name, percent }) =>
-                    `${name} (${((percent || 0) * 100).toFixed(0)}%)`
-                  }
+                  label={({
+                    cx,
+                    cy,
+                    midAngle = 0,
+                    outerRadius = 100,
+                    name,
+                    value,
+                    percent,
+                    fill,
+                  }) => {
+                    const RADIAN = Math.PI / 180;
+                    const radius = (outerRadius as number) + 25;
+                    const x =
+                      (cx as number) + radius * Math.cos(-midAngle * RADIAN);
+                    const y =
+                      (cy as number) + radius * Math.sin(-midAngle * RADIAN);
+                    const textAnchor = x > (cx as number) ? "start" : "end";
+                    return (
+                      <text
+                        x={x}
+                        y={y}
+                        textAnchor={textAnchor}
+                        dominantBaseline="central"
+                        style={{ fontSize: 14 }}
+                        fill={fill}
+                      >
+                        <tspan x={x} dy="-0.5em">
+                          {name} {value.toLocaleString()} คน
+                        </tspan>
+                        <tspan x={x} dy="1.2em">
+                          ({((percent || 0) * 100).toFixed(2)}%)
+                        </tspan>
+                      </text>
+                    );
+                  }}
                   labelLine={{ stroke: "#94a3b8" }}
+                  style={{ fontSize: 12 }}
                 >
                   {byRegType.map((_, index) => (
                     <Cell
@@ -508,31 +556,32 @@ export function StatsClient({
             { key: "value", label: "จำนวน (คน)" },
           ]}
         >
-          <div className="h-72">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={byPosition} layout="vertical" margin={{ left: 80 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                <XAxis type="number" tick={{ fontSize: 12 }} />
-                <YAxis
-                  dataKey="name"
-                  type="category"
-                  tick={{ fontSize: 11 }}
-                  width={70}
-                />
-                <Tooltip
-                  formatter={(value: number) => [`${value} คน`, "จำนวน"]}
-                />
-                <Bar dataKey="value" fill="#0891b2" radius={[0, 4, 4, 0]}>
-                  {byPosition.map((_, index) => (
-                    <Cell
-                      key={`cell-${index}`}
-                      fill={CHART_COLORS[index % CHART_COLORS.length]}
-                    />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart
+              data={byPosition}
+              margin={{ top: 20, right: 20, left: 20, bottom: 60 }}
+            >
+              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+              <XAxis
+                dataKey="name"
+                tick={{ fontSize: 10, angle: -45, textAnchor: "end" } as object}
+                interval={0}
+                height={50}
+              />
+              <YAxis tick={{ fontSize: 12 }} />
+              <Tooltip
+                formatter={(value: number) => [`${value} คน`, "จำนวน"]}
+              />
+              <Bar dataKey="value" radius={[4, 4, 0, 0]}>
+                {byPosition.map((_, index) => (
+                  <Cell
+                    key={`cell-${index}`}
+                    fill={CHART_COLORS[index % CHART_COLORS.length]}
+                  />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
         </ChartCard>
       </div>
 

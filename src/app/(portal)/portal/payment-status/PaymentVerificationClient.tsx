@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -88,28 +88,32 @@ const statusConfig: Record<
     icon: typeof Clock;
     bgColor: string;
     textColor: string;
+    borderColor: string;
   }
 > = {
   1: {
     label: "รอตรวจสอบ",
     variant: "outline",
     icon: Clock,
-    bgColor: "bg-amber-50",
-    textColor: "text-amber-700",
+    bgColor: "bg-gradient-to-r from-cyan-50 to-kram-50",
+    textColor: "text-cyan-700",
+    borderColor: "border-cyan-200",
   },
   2: {
     label: "ผ่าน",
     variant: "default",
     icon: CheckCircle2,
-    bgColor: "bg-emerald-50",
+    bgColor: "bg-gradient-to-r from-emerald-50 to-cyan-50",
     textColor: "text-emerald-700",
+    borderColor: "border-emerald-200",
   },
   9: {
     label: "ไม่ผ่าน",
     variant: "destructive",
     icon: XCircle,
-    bgColor: "bg-red-50",
-    textColor: "text-red-700",
+    bgColor: "bg-gradient-to-r from-red-50 to-orange-50",
+    textColor: "text-red-600",
+    borderColor: "border-red-200",
   },
 };
 
@@ -135,12 +139,12 @@ function SortIcon({
   currentOrder: SortOrder;
 }) {
   if (field !== currentField) {
-    return <ChevronsUpDown className="w-4 h-4 ml-1 text-gray-400" />;
+    return <ChevronsUpDown className="w-4 h-4 ml-1 text-kram-300" />;
   }
   return currentOrder === "asc" ? (
-    <ChevronUp className="w-4 h-4 ml-1 text-indigo-600" />
+    <ChevronUp className="w-4 h-4 ml-1 text-cyan-600" />
   ) : (
-    <ChevronDown className="w-4 h-4 ml-1 text-indigo-600" />
+    <ChevronDown className="w-4 h-4 ml-1 text-cyan-600" />
   );
 }
 
@@ -188,6 +192,31 @@ export default function PaymentVerificationClient({
   const [isLoading, setIsLoading] = useState(false);
   const [actionType, setActionType] = useState<"approve" | "reject" | null>(null);
 
+  // Drag-to-scroll state for payment slip image
+  const imageContainerRef = useRef<HTMLDivElement>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [startY, setStartY] = useState(0);
+  const [scrollTop, setScrollTop] = useState(0);
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (!imageContainerRef.current) return;
+    setIsDragging(true);
+    setStartY(e.pageY - imageContainerRef.current.offsetTop);
+    setScrollTop(imageContainerRef.current.scrollTop);
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging || !imageContainerRef.current) return;
+    e.preventDefault();
+    const y = e.pageY - imageContainerRef.current.offsetTop;
+    const walk = (y - startY) * 1.5; // Scroll speed multiplier
+    imageContainerRef.current.scrollTop = scrollTop - walk;
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
   const openModal = (finance: Finance) => {
     setSelectedFinance(finance);
     setIsModalOpen(true);
@@ -226,82 +255,84 @@ export default function PaymentVerificationClient({
 
   return (
     <div className="space-y-8">
-      {/* Header */}
-      <div className="relative">
-        <div className="absolute inset-0 bg-gradient-to-r from-indigo-600/5 via-purple-600/5 to-pink-600/5 rounded-2xl" />
-        <div className="relative p-6">
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-indigo-700 via-purple-700 to-indigo-700 bg-clip-text text-transparent">
-            ตรวจสอบการชำระเงิน
-          </h1>
-          <p className="text-gray-500 mt-1">
-            ตรวจสอบและยืนยันหลักฐานการชำระเงินจากผู้ลงทะเบียน
-          </p>
+      {/* Header with KramSakon theme */}
+      <div className="animate-fade-in">
+        <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-kram-100 to-cyan-100 text-kram-700 text-sm font-medium rounded-full mb-3 border border-kram-200/50">
+          <FileText className="w-4 h-4 text-kram-600" />
+          <span>การชำระเงิน</span>
         </div>
+        <h1 className="text-2xl font-bold bg-gradient-to-r from-kram-900 via-kram-800 to-kram-900 bg-clip-text text-transparent">
+          ตรวจสอบการชำระเงิน
+        </h1>
+        <p className="text-kram-500 mt-1 flex items-center gap-2">
+          <span className="w-1.5 h-1.5 rounded-full bg-cyan-500" />
+          ตรวจสอบและยืนยันหลักฐานการชำระเงินจากผู้ลงทะเบียน
+        </p>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-fade-in [animation-delay:100ms]">
         {/* Pending Review */}
-        <Card className="relative overflow-hidden border-0 shadow-lg shadow-amber-100/50">
-          <div className="absolute inset-0 bg-gradient-to-br from-amber-50 to-orange-50" />
-          <div className="absolute top-0 right-0 w-32 h-32 bg-amber-200/30 rounded-full -translate-y-16 translate-x-16" />
+        <Card className="group relative overflow-hidden border-0 bg-white/70 backdrop-blur-sm shadow-lg shadow-cyan-500/10 hover:shadow-xl hover:scale-[1.02] transition-all duration-300">
+          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-cyan-400 to-kram-500" />
+          <div className="absolute -top-10 -right-10 w-32 h-32 bg-gradient-to-br from-cyan-200/30 to-kram-200/20 rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity" />
           <CardContent className="relative pt-6">
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-sm font-medium text-amber-700/80">
+                <p className="text-sm font-medium text-cyan-700">
                   รอตรวจสอบ
                 </p>
-                <p className="text-4xl font-bold text-amber-700 mt-2 tracking-tight">
+                <p className="text-4xl font-bold bg-gradient-to-r from-cyan-600 to-kram-600 bg-clip-text text-transparent mt-2 tracking-tight">
                   {stats.pendingAttendees.toLocaleString("th-TH")}
                 </p>
-                <p className="text-sm text-amber-600/70 mt-1">คน</p>
+                <p className="text-sm text-kram-400 mt-1">คน</p>
               </div>
-              <div className="p-3 bg-amber-500/10 rounded-xl">
-                <Clock className="w-7 h-7 text-amber-600" />
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-cyan-100 to-kram-100 flex items-center justify-center shadow-sm">
+                <Clock className="w-6 h-6 text-cyan-600" />
               </div>
             </div>
           </CardContent>
         </Card>
 
         {/* Pending Amount */}
-        <Card className="relative overflow-hidden border-0 shadow-lg shadow-indigo-100/50">
-          <div className="absolute inset-0 bg-gradient-to-br from-indigo-50 to-blue-50" />
-          <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-200/30 rounded-full -translate-y-16 translate-x-16" />
+        <Card className="group relative overflow-hidden border-0 bg-white/70 backdrop-blur-sm shadow-lg shadow-kram-500/10 hover:shadow-xl hover:scale-[1.02] transition-all duration-300">
+          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-kram-500 to-cyan-500" />
+          <div className="absolute -top-10 -right-10 w-32 h-32 bg-gradient-to-br from-kram-200/30 to-cyan-200/20 rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity" />
           <CardContent className="relative pt-6">
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-sm font-medium text-indigo-700/80">
+                <p className="text-sm font-medium text-kram-700">
                   ยอดเงินรอตรวจสอบ
                 </p>
-                <p className="text-4xl font-bold text-indigo-700 mt-2 tracking-tight">
+                <p className="text-4xl font-bold bg-gradient-to-r from-kram-600 to-kram-800 bg-clip-text text-transparent mt-2 tracking-tight">
                   {stats.pendingAmount.toLocaleString("th-TH")}
                 </p>
-                <p className="text-sm text-indigo-600/70 mt-1">บาท</p>
+                <p className="text-sm text-kram-400 mt-1">บาท</p>
               </div>
-              <div className="p-3 bg-indigo-500/10 rounded-xl">
-                <Banknote className="w-7 h-7 text-indigo-600" />
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-kram-100 to-cyan-100 flex items-center justify-center shadow-sm">
+                <Banknote className="w-6 h-6 text-kram-600" />
               </div>
             </div>
           </CardContent>
         </Card>
 
         {/* Paid Success */}
-        <Card className="relative overflow-hidden border-0 shadow-lg shadow-emerald-100/50">
-          <div className="absolute inset-0 bg-gradient-to-br from-emerald-50 to-green-50" />
-          <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-200/30 rounded-full -translate-y-16 translate-x-16" />
+        <Card className="group relative overflow-hidden border-0 bg-white/70 backdrop-blur-sm shadow-lg shadow-emerald-500/10 hover:shadow-xl hover:scale-[1.02] transition-all duration-300">
+          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-emerald-400 to-cyan-500" />
+          <div className="absolute -top-10 -right-10 w-32 h-32 bg-gradient-to-br from-emerald-200/30 to-cyan-200/20 rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity" />
           <CardContent className="relative pt-6">
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-sm font-medium text-emerald-700/80">
+                <p className="text-sm font-medium text-emerald-700">
                   ชำระเงินสำเร็จ
                 </p>
-                <p className="text-4xl font-bold text-emerald-700 mt-2 tracking-tight">
+                <p className="text-4xl font-bold bg-gradient-to-r from-emerald-600 to-cyan-600 bg-clip-text text-transparent mt-2 tracking-tight">
                   {stats.paidAttendees.toLocaleString("th-TH")}
                 </p>
-                <p className="text-sm text-emerald-600/70 mt-1">คน</p>
+                <p className="text-sm text-kram-400 mt-1">คน</p>
               </div>
-              <div className="p-3 bg-emerald-500/10 rounded-xl">
-                <CheckCircle2 className="w-7 h-7 text-emerald-600" />
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-100 to-cyan-100 flex items-center justify-center shadow-sm">
+                <CheckCircle2 className="w-6 h-6 text-emerald-600" />
               </div>
             </div>
           </CardContent>
@@ -309,26 +340,29 @@ export default function PaymentVerificationClient({
       </div>
 
       {/* Finance Table */}
-      <Card className="border-0 shadow-xl shadow-gray-200/50">
-        <CardHeader className="border-b bg-gradient-to-r from-gray-50 to-slate-50">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <FileText className="w-5 h-5 text-indigo-600" />
-              รายการแจ้งชำระเงิน
-              <Badge variant="secondary" className="ml-2">
-                {totalFinances} รายการ
-              </Badge>
-            </CardTitle>
+      <Card className="border-0 bg-white/70 backdrop-blur-sm shadow-lg shadow-kram-900/5 overflow-hidden animate-fade-in [animation-delay:200ms]">
+        <div className="h-1 bg-gradient-to-r from-kram-500 via-cyan-500 to-kram-500" />
+        <CardHeader>
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-kram-100 to-cyan-100 flex items-center justify-center">
+              <FileText className="w-5 h-5 text-kram-600" />
+            </div>
+            <div>
+              <CardTitle className="text-lg text-kram-900">
+                รายการแจ้งชำระเงิน
+              </CardTitle>
+              <p className="text-sm text-kram-500">{totalFinances} รายการ</p>
+            </div>
           </div>
         </CardHeader>
         <CardContent className="p-0">
           {finances.length === 0 ? (
             <div className="text-center py-16">
-              <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
-                <Search className="w-8 h-8 text-gray-400" />
+              <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-kram-100 to-cyan-100 flex items-center justify-center">
+                <Search className="w-10 h-10 text-kram-400" />
               </div>
-              <p className="text-gray-500 font-medium">ไม่พบรายการแจ้งชำระเงิน</p>
-              <p className="text-gray-400 text-sm mt-1">
+              <p className="text-kram-600 font-medium mb-2">ไม่พบรายการแจ้งชำระเงิน</p>
+              <p className="text-kram-400 text-sm">
                 ยังไม่มีผู้ลงทะเบียนแจ้งชำระเงินเข้ามา
               </p>
             </div>
@@ -337,11 +371,11 @@ export default function PaymentVerificationClient({
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
-                    <tr className="border-b bg-gray-50/50">
-                      <th className="px-6 py-4 text-left font-semibold text-gray-600 w-16">
+                    <tr className="border-b border-kram-100">
+                      <th className="px-6 py-4 text-left font-semibold text-kram-600 text-sm w-16">
                         ลำดับ
                       </th>
-                      <th className="px-6 py-4 text-left font-semibold text-gray-600">
+                      <th className="px-6 py-4 text-left font-semibold text-kram-600 text-sm">
                         <Link
                           href={getSortUrl(
                             "createdAt",
@@ -349,7 +383,7 @@ export default function PaymentVerificationClient({
                             sortOrder,
                             statusFilter
                           )}
-                          className="flex items-center hover:text-indigo-600 transition-colors"
+                          className="flex items-center hover:text-kram-800 transition-colors"
                         >
                           วันที่แจ้ง
                           <SortIcon
@@ -359,7 +393,7 @@ export default function PaymentVerificationClient({
                           />
                         </Link>
                       </th>
-                      <th className="px-6 py-4 text-left font-semibold text-gray-600">
+                      <th className="px-6 py-4 text-left font-semibold text-kram-600 text-sm">
                         <Link
                           href={getSortUrl(
                             "hospital",
@@ -367,7 +401,7 @@ export default function PaymentVerificationClient({
                             sortOrder,
                             statusFilter
                           )}
-                          className="flex items-center hover:text-indigo-600 transition-colors"
+                          className="flex items-center hover:text-kram-800 transition-colors"
                         >
                           หน่วยงาน
                           <SortIcon
@@ -377,7 +411,7 @@ export default function PaymentVerificationClient({
                           />
                         </Link>
                       </th>
-                      <th className="px-6 py-4 text-left font-semibold text-gray-600">
+                      <th className="px-6 py-4 text-left font-semibold text-kram-600 text-sm">
                         <Link
                           href={getSortUrl(
                             "attendeeCount",
@@ -385,7 +419,7 @@ export default function PaymentVerificationClient({
                             sortOrder,
                             statusFilter
                           )}
-                          className="flex items-center hover:text-indigo-600 transition-colors"
+                          className="flex items-center hover:text-kram-800 transition-colors"
                         >
                           จำนวนคน
                           <SortIcon
@@ -395,10 +429,10 @@ export default function PaymentVerificationClient({
                           />
                         </Link>
                       </th>
-                      <th className="px-6 py-4 text-left font-semibold text-gray-600">
+                      <th className="px-6 py-4 text-left font-semibold text-kram-600 text-sm">
                         ยอดเงิน
                       </th>
-                      <th className="px-6 py-4 text-left font-semibold text-gray-600">
+                      <th className="px-6 py-4 text-left font-semibold text-kram-600 text-sm">
                         <Link
                           href={getSortUrl(
                             "status",
@@ -406,7 +440,7 @@ export default function PaymentVerificationClient({
                             sortOrder,
                             statusFilter
                           )}
-                          className="flex items-center hover:text-indigo-600 transition-colors"
+                          className="flex items-center hover:text-kram-800 transition-colors"
                         >
                           สถานะ
                           <SortIcon
@@ -416,12 +450,12 @@ export default function PaymentVerificationClient({
                           />
                         </Link>
                       </th>
-                      <th className="px-6 py-4 text-center font-semibold text-gray-600">
+                      <th className="px-6 py-4 text-center font-semibold text-kram-600 text-sm">
                         ตรวจสอบ
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-100">
+                  <tbody className="divide-y divide-kram-50">
                     {finances.map((finance, index) => {
                       const status = statusConfig[finance.status] || statusConfig[1];
                       const StatusIcon = status.icon;
@@ -430,39 +464,39 @@ export default function PaymentVerificationClient({
                       return (
                         <tr
                           key={finance.id}
-                          className="hover:bg-indigo-50/30 transition-colors group"
+                          className="group hover:bg-gradient-to-r hover:from-kram-50/50 hover:to-cyan-50/30 transition-colors duration-200"
                         >
-                          <td className="px-6 py-4 text-gray-500 font-medium">
+                          <td className="px-6 py-4 text-kram-400 font-medium">
                             {rowNumber}
                           </td>
                           <td className="px-6 py-4">
-                            <span className="text-gray-700">
+                            <span className="text-kram-700">
                               {formatDate(finance.createdAt)}
                             </span>
                           </td>
                           <td className="px-6 py-4">
-                            <span className="font-medium text-gray-900">
+                            <span className="font-semibold text-kram-900">
                               {finance.hospitalName}
                             </span>
                           </td>
                           <td className="px-6 py-4">
                             <div className="flex items-center gap-2">
-                              <Users className="w-4 h-4 text-gray-400" />
-                              <span className="font-semibold text-gray-700">
+                              <Users className="w-4 h-4 text-kram-400" />
+                              <span className="font-semibold text-kram-700">
                                 {finance.attendeeCount}
                               </span>
-                              <span className="text-gray-400 text-sm">คน</span>
+                              <span className="text-kram-400 text-sm">คน</span>
                             </div>
                           </td>
                           <td className="px-6 py-4">
-                            <span className="font-bold text-indigo-600">
+                            <span className="font-bold bg-gradient-to-r from-kram-600 to-cyan-600 bg-clip-text text-transparent">
                               {finance.amount.toLocaleString("th-TH")}
                             </span>
-                            <span className="text-gray-400 text-sm ml-1">บาท</span>
+                            <span className="text-kram-400 text-sm ml-1">บาท</span>
                           </td>
                           <td className="px-6 py-4">
                             <div
-                              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium ${status.bgColor} ${status.textColor}`}
+                              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium ${status.bgColor} ${status.textColor} border ${status.borderColor}`}
                             >
                               <StatusIcon className="w-3.5 h-3.5" />
                               {status.label}
@@ -473,7 +507,7 @@ export default function PaymentVerificationClient({
                               variant="outline"
                               size="sm"
                               onClick={() => openModal(finance)}
-                              className="border-indigo-200 text-indigo-600 hover:bg-indigo-50 hover:border-indigo-300 transition-all group-hover:shadow-md"
+                              className="border-kram-200 text-kram-600 hover:bg-kram-50 hover:border-cyan-300 hover:text-kram-700 transition-all group-hover:shadow-md"
                             >
                               <Eye className="w-4 h-4 mr-1.5" />
                               ตรวจสอบ
@@ -506,33 +540,45 @@ export default function PaymentVerificationClient({
 
       {/* Verification Modal */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden p-0">
-          <DialogHeader className="px-6 py-4 border-b bg-gradient-to-r from-indigo-50 to-purple-50">
-            <DialogTitle className="text-xl font-bold text-indigo-900 flex items-center gap-2">
-              <FileText className="w-5 h-5" />
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden p-0 border-0 shadow-2xl">
+          <DialogHeader className="px-6 py-4 border-b bg-gradient-to-r from-kram-50 to-cyan-50">
+            <DialogTitle className="text-xl font-bold text-kram-900 flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-kram-100 to-cyan-100 flex items-center justify-center">
+                <FileText className="w-5 h-5 text-kram-600" />
+              </div>
               ตรวจสอบหลักฐานการชำระเงิน
             </DialogTitle>
-            <DialogDescription className="text-indigo-600/70">
+            <DialogDescription className="text-kram-500 ml-13">
               รายการ #{selectedFinance?.id} • {formatDate(selectedFinance?.createdAt || null)}
             </DialogDescription>
           </DialogHeader>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-0 max-h-[60vh] overflow-hidden">
-            {/* Left Column - Slip Image */}
-            <div className="bg-gray-900 p-6 flex items-center justify-center min-h-[400px] relative overflow-auto">
+            {/* Left Column - Slip Image with drag-to-scroll */}
+            <div
+              ref={imageContainerRef}
+              className={`bg-gradient-to-br from-kram-900 to-kram-950 p-4 min-h-[400px] max-h-[60vh] overflow-y-auto overflow-x-hidden relative select-none ${
+                isDragging ? "cursor-grabbing" : "cursor-grab"
+              }`}
+              onMouseDown={handleMouseDown}
+              onMouseMove={handleMouseMove}
+              onMouseUp={handleMouseUp}
+              onMouseLeave={handleMouseUp}
+            >
               {selectedFinance?.fileName ? (
-                <div className="relative w-full h-full flex items-center justify-center">
+                <div className="flex justify-center">
                   <Image
                     src={selectedFinance.fileName}
                     alt="หลักฐานการชำระเงิน"
                     width={400}
-                    height={600}
-                    className="max-w-full max-h-[55vh] object-contain rounded-lg shadow-2xl"
+                    height={1200}
+                    className="w-full h-auto object-contain rounded-xl shadow-2xl border border-kram-700"
                     unoptimized
+                    draggable={false}
                   />
                 </div>
               ) : (
-                <div className="text-center text-gray-400">
+                <div className="text-center text-kram-400 flex flex-col items-center justify-center min-h-[300px]">
                   <FileText className="w-16 h-16 mx-auto mb-4 opacity-50" />
                   <p>ไม่พบไฟล์หลักฐาน</p>
                 </div>
@@ -542,14 +588,14 @@ export default function PaymentVerificationClient({
             {/* Right Column - Attendee List */}
             <div className="bg-white p-6 overflow-auto max-h-[60vh]">
               <div className="mb-4">
-                <h3 className="font-bold text-gray-900 flex items-center gap-2">
-                  <Users className="w-5 h-5 text-indigo-600" />
+                <h3 className="font-bold text-kram-900 flex items-center gap-2">
+                  <Users className="w-5 h-5 text-kram-600" />
                   รายชื่อผู้ลงทะเบียน
-                  <Badge variant="secondary" className="ml-auto">
+                  <Badge variant="secondary" className="ml-auto bg-kram-100 text-kram-700">
                     {selectedFinance?.attendeeCount || 0} คน
                   </Badge>
                 </h3>
-                <p className="text-sm text-gray-500 mt-1">
+                <p className="text-sm text-kram-500 mt-1">
                   {selectedFinance?.hospitalName}
                 </p>
               </div>
@@ -561,28 +607,28 @@ export default function PaymentVerificationClient({
                   return (
                     <div
                       key={attendee.id}
-                      className="p-4 bg-gray-50 rounded-xl border border-gray-100 hover:border-indigo-200 transition-colors"
+                      className="p-4 bg-gradient-to-r from-kram-50/50 to-cyan-50/30 rounded-xl border border-kram-100 hover:border-cyan-200 transition-colors"
                     >
                       <div className="flex items-start justify-between">
                         <div className="flex items-start gap-3">
-                          <div className="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600 font-bold text-sm">
+                          <div className="w-8 h-8 bg-gradient-to-br from-kram-500 to-cyan-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
                             {index + 1}
                           </div>
                           <div>
-                            <p className="font-semibold text-gray-900">
+                            <p className="font-semibold text-kram-900">
                               {attendee.prefix}
                               {attendee.firstName} {attendee.lastName}
                             </p>
-                            <p className="text-sm text-gray-500">
+                            <p className="text-sm text-kram-500">
                               {attendee.hospital?.name || "-"}
                             </p>
                           </div>
                         </div>
                         <div className="text-right">
-                          <p className="font-bold text-indigo-600">
+                          <p className="font-bold bg-gradient-to-r from-kram-600 to-cyan-600 bg-clip-text text-transparent">
                             {price.toLocaleString("th-TH")}
                           </p>
-                          <p className="text-xs text-gray-400">บาท</p>
+                          <p className="text-xs text-kram-400">บาท</p>
                         </div>
                       </div>
                     </div>
@@ -591,25 +637,26 @@ export default function PaymentVerificationClient({
               </div>
 
               {/* Total Amount */}
-              <div className="mt-6 p-4 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-xl text-white">
-                <div className="flex items-center justify-between">
+              <div className="mt-6 p-4 bg-gradient-to-r from-kram-600 via-kram-700 to-cyan-600 rounded-xl text-white relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/4" />
+                <div className="relative flex items-center justify-between">
                   <span className="font-medium">ยอดรวมทั้งสิ้น</span>
                   <div className="text-right">
                     <span className="text-3xl font-bold">
                       {(selectedFinance?.amount || 0).toLocaleString("th-TH")}
                     </span>
-                    <span className="text-indigo-200 ml-2">บาท</span>
+                    <span className="text-cyan-200 ml-2">บาท</span>
                   </div>
                 </div>
               </div>
 
               {/* Status Warning */}
               {selectedFinance?.status === 1 && (
-                <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-xl flex items-start gap-3">
-                  <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                <div className="mt-4 p-4 bg-gradient-to-r from-cyan-50 to-kram-50 border border-cyan-200/50 rounded-xl flex items-start gap-3">
+                  <AlertTriangle className="w-5 h-5 text-cyan-600 flex-shrink-0 mt-0.5" />
                   <div>
-                    <p className="font-medium text-amber-800">รอการตรวจสอบ</p>
-                    <p className="text-sm text-amber-700">
+                    <p className="font-semibold text-kram-800">รอการตรวจสอบ</p>
+                    <p className="text-sm text-kram-600">
                       กรุณาตรวจสอบหลักฐานการชำระเงินให้ครบถ้วนก่อนยืนยัน
                     </p>
                   </div>
@@ -618,12 +665,12 @@ export default function PaymentVerificationClient({
             </div>
           </div>
 
-          <DialogFooter className="px-6 py-4 border-t bg-gray-50 gap-3">
+          <DialogFooter className="px-6 py-4 border-t bg-gradient-to-r from-kram-50/50 to-cyan-50/50 gap-3">
             <Button
               variant="outline"
               onClick={closeModal}
               disabled={isLoading}
-              className="min-w-[120px]"
+              className="min-w-[120px] border-kram-200 text-kram-600 hover:bg-kram-50"
             >
               ปิดหน้าต่าง
             </Button>
@@ -634,7 +681,7 @@ export default function PaymentVerificationClient({
                   variant="destructive"
                   onClick={() => handleAction("reject")}
                   disabled={isLoading}
-                  className="min-w-[140px] bg-red-500 hover:bg-red-600"
+                  className="min-w-[140px] bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-600 hover:to-orange-600"
                 >
                   {isLoading && actionType === "reject" ? (
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -646,7 +693,7 @@ export default function PaymentVerificationClient({
                 <Button
                   onClick={() => handleAction("approve")}
                   disabled={isLoading}
-                  className="min-w-[180px] bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600 shadow-lg shadow-emerald-200"
+                  className="min-w-[180px] bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600 shadow-lg shadow-emerald-500/20"
                 >
                   {isLoading && actionType === "approve" ? (
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
