@@ -2,6 +2,17 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Upload,
+  Loader2,
+  CheckCircle,
+  Calculator,
+  AlertCircle,
+} from "lucide-react";
 
 interface Attendee {
   id: number;
@@ -117,36 +128,28 @@ export default function PaymentClient({
 
   if (success) {
     return (
-      <div className="bg-white rounded-lg border p-12 text-center">
-        <svg
-          className="w-16 h-16 mx-auto text-green-500 mb-4"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-          />
-        </svg>
-        <h2 className="text-xl font-semibold text-gray-900 mb-2">
-          ส่งหลักฐานการชำระเงินสำเร็จ
-        </h2>
-        <p className="text-gray-500">กำลังนำท่านไปยังหน้าตรวจสอบสถานะ...</p>
-      </div>
+      <Card>
+        <CardContent className="py-12">
+          <div className="text-center">
+            <CheckCircle className="w-16 h-16 mx-auto text-green-500 mb-4" />
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">
+              ส่งหลักฐานการชำระเงินสำเร็จ
+            </h2>
+            <p className="text-gray-500">กำลังนำท่านไปยังหน้าตรวจสอบสถานะ...</p>
+          </div>
+        </CardContent>
+      </Card>
     );
   }
 
   return (
     <form onSubmit={submit} className="space-y-6">
       {/* Attendee List */}
-      <div className="bg-white rounded-lg border">
-        <div className="p-4 border-b">
-          <h3 className="font-semibold text-gray-900">เลือกผู้ลงทะเบียน</h3>
-        </div>
-        <div className="p-4">
+      <Card>
+        <CardHeader>
+          <CardTitle>เลือกผู้ลงทะเบียน</CardTitle>
+        </CardHeader>
+        <CardContent>
           {attendees.length === 0 ? (
             <p className="text-center py-8 text-gray-500">
               ไม่มีรายการที่รอชำระเงิน
@@ -159,9 +162,9 @@ export default function PaymentClient({
                     <th className="pb-3 pr-2 w-10">
                       <input
                         type="checkbox"
-                        checked={selected.length === attendees.length}
+                        checked={selected.length === attendees.length && attendees.length > 0}
                         onChange={toggleAll}
-                        className="w-4 h-4 rounded border-gray-300"
+                        className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary"
                       />
                     </th>
                     <th className="pb-3 font-medium text-gray-500">ชื่อ-สกุล</th>
@@ -184,7 +187,7 @@ export default function PaymentClient({
                           type="checkbox"
                           checked={selected.includes(a.id)}
                           onChange={() => toggle(a.id)}
-                          className="w-4 h-4 rounded border-gray-300"
+                          className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary"
                         />
                       </td>
                       <td className="py-3 font-medium">
@@ -206,136 +209,118 @@ export default function PaymentClient({
               </table>
             </div>
           )}
-        </div>
-      </div>
+        </CardContent>
+      </Card>
 
-      {/* Two Column */}
+      {/* Two Column Layout */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Total */}
-        <div className="bg-emerald-50 border-2 border-emerald-200 rounded-lg p-6 flex flex-col justify-center">
-          <div className="text-center">
-            <p className="text-sm text-gray-600 mb-2">จำนวนเงินที่ต้องชำระ</p>
-            <p className="text-5xl font-bold text-emerald-600">
-              {total.toLocaleString("th-TH")}
-            </p>
-            <p className="text-gray-500 mt-1">บาท</p>
-            <p className="text-sm text-gray-500 mt-2">
-              {selected.length} คน x ค่าลงทะเบียน
-            </p>
-          </div>
-          <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-            <p className="text-sm text-red-700 text-center">
-              * ลงทะเบียนจ่ายเงินแล้ว ไม่สามารถรับคืนเงินได้
-            </p>
-          </div>
-        </div>
-
-        {/* Upload */}
-        <div className="bg-white rounded-lg border p-6">
-          <h3 className="font-semibold text-gray-900 mb-4">
-            อัปโหลดหลักฐานการชำระเงิน
-          </h3>
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  วันที่โอนเงิน
-                </label>
-                <input
-                  type="date"
-                  value={date}
-                  onChange={(e) => setDate(e.target.value)}
-                  className="w-full px-3 py-2 border rounded-md text-sm"
-                />
+        {/* Total Amount Card */}
+        <Card className="border-2 border-emerald-200 bg-emerald-50/50">
+          <CardContent className="pt-6">
+            <div className="flex flex-col items-center text-center gap-3">
+              <div className="p-3 bg-emerald-100 rounded-xl">
+                <Calculator className="w-6 h-6 text-emerald-600" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  เวลาที่โอนเงิน
-                </label>
-                <input
-                  type="time"
-                  value={time}
-                  onChange={(e) => setTime(e.target.value)}
-                  className="w-full px-3 py-2 border rounded-md text-sm"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                อัพโหลดเอกสาร <span className="text-red-500">*</span>
-              </label>
-              <p className="text-xs text-gray-500 mb-2">
-                ไฟล์ภาพ .jpg, .jpeg, .png สูงสุด 5MB
-              </p>
-              <input
-                type="file"
-                accept=".jpg,.jpeg,.png"
-                onChange={handleFile}
-                className="w-full text-sm"
-              />
-              {file && (
-                <p className="mt-2 text-sm text-green-600">
-                  ไฟล์ที่เลือก: {file.name}
+                <p className="text-sm text-gray-600">จำนวนเงินที่ต้องชำระ</p>
+                <p className="text-5xl font-bold text-emerald-600 my-3">
+                  {total.toLocaleString("th-TH")}
                 </p>
-              )}
-            </div>
-
-            {error && (
-              <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
-                {error}
+                <p className="text-gray-500">บาท</p>
+                <p className="text-sm text-gray-500 mt-2">
+                  {selected.length} คน x ค่าลงทะเบียน
+                </p>
               </div>
-            )}
+            </div>
+            <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+              <p className="text-sm text-red-700 text-center">
+                <span className="font-semibold">*</span> ลงทะเบียนจ่ายเงินแล้ว
+                ไม่สามารถรับคืนเงินได้
+              </p>
+            </div>
+          </CardContent>
+        </Card>
 
-            <button
-              type="submit"
-              disabled={loading || attendees.length === 0}
-              className="w-full py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-            >
-              {loading ? (
-                <>
-                  <svg
-                    className="animate-spin h-4 w-4"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                  >
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                    />
-                    <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-                    />
-                  </svg>
-                  กำลังส่งข้อมูล...
-                </>
-              ) : (
-                <>
-                  <svg
-                    className="w-4 h-4"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
-                    />
-                  </svg>
-                  ส่งหลักฐานการชำระเงิน
-                </>
+        {/* Upload Form Card */}
+        <Card>
+          <CardHeader>
+            <CardTitle>อัปโหลดหลักฐานการชำระเงิน</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {/* Date & Time Inputs */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="transferDate">วันที่โอนเงิน</Label>
+                  <Input
+                    id="transferDate"
+                    type="date"
+                    value={date}
+                    onChange={(e) => setDate(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="transferTime">เวลาที่โอนเงิน</Label>
+                  <Input
+                    id="transferTime"
+                    type="time"
+                    value={time}
+                    onChange={(e) => setTime(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              {/* File Upload */}
+              <div className="space-y-2">
+                <Label htmlFor="file">
+                  อัพโหลดเอกสาร <span className="text-red-500">*</span>
+                </Label>
+                <p className="text-xs text-gray-500">
+                  ไฟล์ภาพ .jpg, .jpeg, .png สูงสุด 5MB
+                </p>
+                <Input
+                  id="file"
+                  type="file"
+                  accept=".jpg,.jpeg,.png"
+                  onChange={handleFile}
+                  className="cursor-pointer"
+                />
+                {file && (
+                  <p className="text-sm text-green-600">
+                    ไฟล์ที่เลือก: {file.name}
+                  </p>
+                )}
+              </div>
+
+              {/* Error Message */}
+              {error && (
+                <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+                  <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                  <span>{error}</span>
+                </div>
               )}
-            </button>
-          </div>
-        </div>
+
+              {/* Submit Button */}
+              <Button
+                type="submit"
+                className="w-full"
+                disabled={loading || attendees.length === 0}
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    กำลังส่งข้อมูล...
+                  </>
+                ) : (
+                  <>
+                    <Upload className="w-4 h-4 mr-2" />
+                    ส่งหลักฐานการชำระเงิน
+                  </>
+                )}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </form>
   );

@@ -54,10 +54,13 @@ export async function POST(request: Request) {
 
     // Update attendee status to "รอตรวจสอบ"
     const attendeeIdArray = attendeeIds.split(",").map((id) => parseInt(id));
+    const isAdmin = session.user.memberType === 99;
+
     await prisma.attendee.updateMany({
       where: {
         id: { in: attendeeIdArray },
-        hospitalCode: session.user.hospitalCode,
+        // Admin can update any attendee, regular users only their hospital's
+        ...(isAdmin ? {} : { hospitalCode: session.user.hospitalCode }),
       },
       data: {
         status: 2, // รอตรวจสอบ

@@ -24,6 +24,7 @@ interface AttendeePaginationProps {
   total: number;
   limit: number;
   startIndex: number;
+  basePath?: string;
 }
 
 export function AttendeePagination({
@@ -32,6 +33,7 @@ export function AttendeePagination({
   total,
   limit,
   startIndex,
+  basePath = "/portal/registration",
 }: AttendeePaginationProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -57,7 +59,7 @@ export function AttendeePagination({
 
     params.set("page", String(newPage));
 
-    return `/portal/registration?${params.toString()}`;
+    return `${basePath}?${params.toString()}`;
   };
 
   const handleLimitChange = (value: string) => {

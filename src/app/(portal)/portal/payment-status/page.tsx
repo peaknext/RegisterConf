@@ -1,147 +1,203 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { FileText, Clock, CheckCircle, XCircle, ExternalLink } from "lucide-react";
-import Link from "next/link";
+import PaymentVerificationClient from "./PaymentVerificationClient";
 
-const statusMap: Record<number, { label: string; variant: "default" | "secondary" | "destructive" | "outline"; icon: typeof Clock }> = {
-  1: { label: "รอตรวจสอบ", variant: "outline", icon: Clock },
-  2: { label: "ผ่าน", variant: "default", icon: CheckCircle },
-  9: { label: "ไม่ผ่าน", variant: "destructive", icon: XCircle },
-};
+const DEFAULT_LIMIT = 10;
 
-async function getFinances(memberId: number, hospitalCode: string | null) {
-  if (!hospitalCode) return [];
+type SortField = "createdAt" | "hospital" | "attendeeCount" | "status";
+type SortOrder = "asc" | "desc";
 
-  return prisma.finance.findMany({
-    where: {
-      member: {
-        hospitalCode,
-      },
-    },
-    orderBy: { createdAt: "desc" },
-  });
+interface FinanceWithDetails {
+  id: number;
+  memberId: number | null;
+  attendeeIds: string | null;
+  fileName: string | null;
+  status: number;
+  createdAt: Date;
+  confirmedAt: Date | null;
+  paidDate: Date | null;
+  hospitalName: string;
+  attendeeCount: number;
+  amount: number;
+  attendees: {
+    id: number;
+    prefix: string | null;
+    firstName: string | null;
+    lastName: string | null;
+    regTypeId: number | null;
+    hospital: { name: string } | null;
+  }[];
 }
 
-export default async function PaymentStatusPage() {
+async function getPageData(
+  sortField: SortField = "createdAt",
+  sortOrder: SortOrder = "desc",
+  page: number = 1,
+  limit: number = DEFAULT_LIMIT,
+  statusFilter?: number
+) {
+  // Get settings for price calculation
+  const settings = await prisma.setting.findFirst();
+  const meetPrice = settings?.meetPrice ? Number(settings.meetPrice) : 2000;
+  const meetPriceFollow = settings?.meetPriceFollow
+    ? Number(settings.meetPriceFollow)
+    : meetPrice;
+
+  // Stats queries
+  const [pendingAttendees, paidAttendees, pendingAttendeesForAmount] =
+    await Promise.all([
+      // Pending attendees (status = 2 รอตรวจสอบ)
+      prisma.attendee.count({ where: { status: 2 } }),
+      // Paid attendees (status = 9)
+      prisma.attendee.count({ where: { status: 9 } }),
+      // Get regTypeId for amount calculation
+      prisma.attendee.findMany({
+        where: { status: 2 },
+        select: { regTypeId: true },
+      }),
+    ]);
+
+  // Calculate pending amount
+  const pendingAmount = pendingAttendeesForAmount.reduce((sum, att) => {
+    return sum + (att.regTypeId === 6 ? meetPriceFollow : meetPrice);
+  }, 0);
+
+  // Build where clause for finance query
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const whereClause: any = {};
+  if (statusFilter !== undefined) {
+    whereClause.status = statusFilter;
+  }
+
+  // Get finances with pagination
+  const [finances, totalFinances] = await Promise.all([
+    prisma.finance.findMany({
+      where: whereClause,
+      include: {
+        member: {
+          include: {
+            hospital: true,
+          },
+        },
+      },
+      orderBy:
+        sortField === "hospital"
+          ? { member: { hospital: { name: sortOrder } } }
+          : { [sortField === "attendeeCount" ? "createdAt" : sortField]: sortOrder },
+      skip: (page - 1) * limit,
+      take: limit,
+    }),
+    prisma.finance.count({ where: whereClause }),
+  ]);
+
+  // Enrich finances with attendee details
+  const financesWithDetails: FinanceWithDetails[] = await Promise.all(
+    finances.map(async (finance) => {
+      const attendeeIds = finance.attendeeIds
+        ? finance.attendeeIds.split(",").map((id) => parseInt(id))
+        : [];
+
+      const attendees = await prisma.attendee.findMany({
+        where: { id: { in: attendeeIds } },
+        select: {
+          id: true,
+          prefix: true,
+          firstName: true,
+          lastName: true,
+          regTypeId: true,
+          hospital: { select: { name: true } },
+        },
+      });
+
+      const amount = attendees.reduce((sum, att) => {
+        return sum + (att.regTypeId === 6 ? meetPriceFollow : meetPrice);
+      }, 0);
+
+      return {
+        id: finance.id,
+        memberId: finance.memberId,
+        attendeeIds: finance.attendeeIds,
+        fileName: finance.fileName,
+        status: finance.status,
+        createdAt: finance.createdAt,
+        confirmedAt: finance.confirmedAt,
+        paidDate: finance.paidDate,
+        hospitalName: finance.member?.hospital?.name || "-",
+        attendeeCount: attendees.length,
+        amount,
+        attendees,
+      };
+    })
+  );
+
+  // Sort by attendeeCount if needed (can't do in Prisma directly)
+  if (sortField === "attendeeCount") {
+    financesWithDetails.sort((a, b) => {
+      return sortOrder === "asc"
+        ? a.attendeeCount - b.attendeeCount
+        : b.attendeeCount - a.attendeeCount;
+    });
+  }
+
+  return {
+    finances: financesWithDetails,
+    totalFinances,
+    stats: {
+      pendingAttendees,
+      pendingAmount,
+      paidAttendees,
+    },
+    meetPrice,
+    meetPriceFollow,
+  };
+}
+
+export default async function PaymentStatusPage({
+  searchParams,
+}: {
+  searchParams: Promise<{
+    sort?: SortField;
+    order?: SortOrder;
+    page?: string;
+    limit?: string;
+    status?: string;
+  }>;
+}) {
   const session = await auth();
   if (!session) redirect("/login");
 
-  const finances = await getFinances(
-    parseInt(session.user.id),
-    session.user.hospitalCode
-  );
+  // Admin only access
+  const isAdmin = session.user.memberType === 99;
+  if (!isAdmin) redirect("/portal");
 
-  const formatDate = (date: Date | null) => {
-    if (!date) return "-";
-    return new Date(date).toLocaleDateString("th-TH", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
+  const params = await searchParams;
+  const sortField = (params.sort as SortField) || "createdAt";
+  const sortOrder = (params.order as SortOrder) || "desc";
+  const currentPage = params.page ? parseInt(params.page) : 1;
+  const limit = params.limit ? parseInt(params.limit) : DEFAULT_LIMIT;
+  const statusFilter = params.status ? parseInt(params.status) : undefined;
+
+  const { finances, totalFinances, stats, meetPrice, meetPriceFollow } =
+    await getPageData(sortField, sortOrder, currentPage, limit, statusFilter);
+
+  const totalPages = Math.ceil(totalFinances / limit);
+  const startIndex = (currentPage - 1) * limit;
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">ตรวจสอบการชำระเงิน</h1>
-        <p className="text-gray-500">ดูสถานะการชำระเงินทั้งหมด</p>
-      </div>
-
-      {finances.length === 0 ? (
-        <Card>
-          <CardContent className="py-12">
-            <div className="text-center text-gray-500">
-              <FileText className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-              <p>ยังไม่มีรายการแจ้งชำระเงิน</p>
-              <Link
-                href="/portal/payment"
-                className="text-primary hover:underline mt-2 inline-block"
-              >
-                แจ้งชำระเงิน
-              </Link>
-            </div>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="space-y-4">
-          {finances.map((finance) => {
-            const status = statusMap[finance.status] || statusMap[1];
-            const StatusIcon = status.icon;
-            const attendeeCount = finance.attendeeIds?.split(",").length || 0;
-
-            return (
-              <Card key={finance.id}>
-                <CardHeader>
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <CardTitle className="text-lg flex items-center gap-2">
-                        <FileText className="w-5 h-5" />
-                        รายการ #{finance.id}
-                      </CardTitle>
-                      <p className="text-sm text-gray-500 mt-1">
-                        ส่งเมื่อ: {formatDate(finance.createdAt)}
-                      </p>
-                    </div>
-                    <Badge variant={status.variant} className="flex items-center gap-1">
-                      <StatusIcon className="w-3 h-3" />
-                      {status.label}
-                    </Badge>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                      <p className="text-sm text-gray-500">จำนวนผู้ลงทะเบียน</p>
-                      <p className="font-medium">{attendeeCount} คน</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-500">วันที่ยืนยัน</p>
-                      <p className="font-medium">
-                        {finance.confirmedAt ? formatDate(finance.confirmedAt) : "-"}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-500">หลักฐานการชำระเงิน</p>
-                      {finance.fileName ? (
-                        <a
-                          href={finance.fileName}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-primary hover:underline flex items-center gap-1"
-                        >
-                          <ExternalLink className="w-4 h-4" />
-                          ดูหลักฐาน
-                        </a>
-                      ) : (
-                        <p className="font-medium">-</p>
-                      )}
-                    </div>
-                  </div>
-
-                  {finance.status === 9 && (
-                    <div className="mt-4 p-3 bg-red-50 rounded-lg text-sm text-red-700">
-                      <p className="font-medium">หลักฐานไม่ผ่านการตรวจสอบ</p>
-                      <p>กรุณาติดต่อผู้จัดงานเพื่อสอบถามรายละเอียดเพิ่มเติม</p>
-                    </div>
-                  )}
-
-                  {finance.status === 2 && finance.paidDate && (
-                    <div className="mt-4 p-3 bg-green-50 rounded-lg text-sm text-green-700">
-                      <p className="font-medium">ชำระเงินเรียบร้อยแล้ว</p>
-                      <p>วันที่ชำระ: {formatDate(finance.paidDate)}</p>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
-      )}
-    </div>
+    <PaymentVerificationClient
+      finances={finances}
+      stats={stats}
+      totalFinances={totalFinances}
+      totalPages={totalPages}
+      currentPage={currentPage}
+      limit={limit}
+      startIndex={startIndex}
+      sortField={sortField}
+      sortOrder={sortOrder}
+      statusFilter={statusFilter}
+      meetPrice={meetPrice}
+      meetPriceFollow={meetPriceFollow}
+    />
   );
 }
