@@ -23,6 +23,7 @@ export default async function SettingsPage() {
     zones,
     siteConfig,
     paymentSettings,
+    members,
   ] = await Promise.all([
     prisma.news.findMany({ orderBy: { publishedAt: "desc" } }),
     prisma.schedule.findMany({
@@ -38,6 +39,10 @@ export default async function SettingsPage() {
     prisma.zone.findMany({ orderBy: { code: "asc" } }),
     prisma.siteConfig.findFirst(),
     prisma.setting.findFirst(),
+    prisma.member.findMany({
+      include: { hospital: { select: { code: true, name: true } } },
+      orderBy: { createdAt: "desc" },
+    }),
   ]);
 
   return (
@@ -51,6 +56,7 @@ export default async function SettingsPage() {
       zones={zones}
       siteConfig={siteConfig}
       paymentSettings={paymentSettings}
+      members={members}
     />
   );
 }

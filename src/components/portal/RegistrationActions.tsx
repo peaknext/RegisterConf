@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { CreditCard, Download, Loader2, FileSpreadsheet } from "lucide-react";
+import { CreditCard, Download, Loader2 } from "lucide-react";
 
 export function RegistrationActions() {
   const [isExporting, setIsExporting] = useState(false);
@@ -68,17 +68,21 @@ export function RegistrationActions() {
       </Link>
 
       <Button
-        variant="outline"
         onClick={handleExport}
         disabled={isExporting}
-        className="border-kram-300 text-kram-700 hover:bg-kram-50 hover:border-kram-400 hover:text-kram-800 transition-all duration-300"
+        className="bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600 text-white shadow-lg shadow-emerald-500/20 hover:shadow-xl transition-all"
       >
         {isExporting ? (
-          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+          <>
+            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            กำลังส่งออก...
+          </>
         ) : (
-          <FileSpreadsheet className="w-4 h-4 mr-2" />
+          <>
+            <Download className="w-4 h-4 mr-2" />
+            Export to Excel
+          </>
         )}
-        Export to Excel
       </Button>
     </div>
   );

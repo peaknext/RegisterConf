@@ -11,7 +11,10 @@
       "Bash(git push:*)",
       "Bash(pm2 delete:*)",
       "Bash(cat:*)",
-      "Bash(npx shadcn@latest add tabs:*)"
+      "Bash(npx shadcn@latest add tabs:*)",
+      "Bash(npm audit:*)",
+      "Bash(node:*)",
+      "Bash(\"a:\\RegisterConf\\src\\app\\(portal)\\portal\\settings\\SettingsClient.tsx\")"
     ],
     "deny": [],
     "ask": []

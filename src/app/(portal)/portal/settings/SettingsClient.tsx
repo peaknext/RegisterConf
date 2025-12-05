@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Decimal } from "@prisma/client/runtime/library";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -128,6 +128,19 @@ interface PaymentSettings {
   meetPriceFollow: Decimal | null;
 }
 
+interface Member {
+  id: number;
+  email: string;
+  hospitalCode: string | null;
+  memberType: number;
+  createdAt: Date;
+  updatedAt: Date;
+  hospital?: {
+    code: string;
+    name: string;
+  } | null;
+}
+
 interface SettingsClientProps {
   news: News[];
   schedules: Schedule[];
@@ -138,6 +151,7 @@ interface SettingsClientProps {
   zones: Zone[];
   siteConfig: SiteConfig | null;
   paymentSettings: PaymentSettings | null;
+  members: Member[];
 }
 
 // Tab summary card component
@@ -252,6 +266,7 @@ export function SettingsClient({
   zones: initialZones,
   siteConfig: initialSiteConfig,
   paymentSettings: initialPaymentSettings,
+  members: initialMembers,
 }: SettingsClientProps) {
   // State for all data
   const [news, setNews] = useState(initialNews);
@@ -263,6 +278,7 @@ export function SettingsClient({
   const [zones, setZones] = useState(initialZones);
   const [siteConfig, setSiteConfig] = useState(initialSiteConfig);
   const [paymentSettings, setPaymentSettings] = useState(initialPaymentSettings);
+  const [members, setMembers] = useState(initialMembers);
 
   // UI state
   const [activeTab, setActiveTab] = useState("content");
@@ -277,6 +293,10 @@ export function SettingsClient({
   const [showHospitalDialog, setShowHospitalDialog] = useState(false);
   const [showHotelDialog, setShowHotelDialog] = useState(false);
   const [showAirlineDialog, setShowAirlineDialog] = useState(false);
+  const [showMemberDialog, setShowMemberDialog] = useState(false);
+  const [showPasswordDialog, setShowPasswordDialog] = useState(false);
+  const [showBulkPasswordDialog, setShowBulkPasswordDialog] = useState(false);
+  const [showImportDialog, setShowImportDialog] = useState(false);
 
   // Edit item states
   const [editingNews, setEditingNews] = useState<News | null>(null);
@@ -285,6 +305,11 @@ export function SettingsClient({
   const [editingHospital, setEditingHospital] = useState<Hospital | null>(null);
   const [editingHotel, setEditingHotel] = useState<Hotel | null>(null);
   const [editingAirline, setEditingAirline] = useState<Airline | null>(null);
+  const [editingMember, setEditingMember] = useState<Member | null>(null);
+
+  // Member-specific states
+  const [selectedMemberIds, setSelectedMemberIds] = useState<number[]>([]);
+  const [importResult, setImportResult] = useState<any>(null);
 
   // Footer form state
   const [footerForm, setFooterForm] = useState({
@@ -661,6 +686,203 @@ export function SettingsClient({
     }
   };
 
+  // Member CRUD handlers
+  const handleSaveMember = async (data: Partial<Member> & { password?: string }) => {
+    setIsSaving(true);
+    try {
+      const method = editingMember ? "PATCH" : "POST";
+      const url = editingMember
+        ? `/api/settings/members/${editingMember.id}`
+        : "/api/settings/members";
+
+      const response = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+
+      if (response.ok) {
+        await refreshMembers();
+        setShowMemberDialog(false);
+        setEditingMember(null);
+      } else {
+        const error = await response.json();
+        alert(error.error || "เกิดข้อผิดพลาด");
+      }
+    } catch (error) {
+      console.error("Error saving member:", error);
+      alert("เกิดข้อผิดพลาดในการบันทึก");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleDeleteMember = async (id: number) => {
+    if (!confirm("ต้องการลบผู้ใช้งานนี้หรือไม่?")) return;
+
+    setIsLoading(true);
+    try {
+      const response = await fetch(`/api/settings/members/${id}`, {
+        method: "DELETE",
+      });
+
+      if (response.ok) {
+        await refreshMembers();
+      } else {
+        const error = await response.json();
+        alert(error.error || "ไม่สามารถลบผู้ใช้งานได้");
+      }
+    } catch (error) {
+      console.error("Error deleting member:", error);
+      alert("เกิดข้อผิดพลาดในการลบ");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleChangePassword = async (newPassword: string) => {
+    if (!editingMember) return;
+
+    setIsSaving(true);
+    try {
+      const response = await fetch(`/api/settings/members/${editingMember.id}/password`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ newPassword }),
+      });
+
+      if (response.ok) {
+        setShowPasswordDialog(false);
+        setEditingMember(null);
+        alert("เปลี่ยนรหัสผ่านสำเร็จ");
+      } else {
+        const error = await response.json();
+        alert(error.error || "เกิดข้อผิดพลาด");
+      }
+    } catch (error) {
+      console.error("Error changing password:", error);
+      alert("เกิดข้อผิดพลาดในการเปลี่ยนรหัสผ่าน");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleBulkPasswordChange = async (newPassword: string) => {
+    if (selectedMemberIds.length === 0) {
+      alert("กรุณาเลือกผู้ใช้งานอย่างน้อย 1 คน");
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const response = await fetch("/api/settings/members/bulk-password", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ memberIds: selectedMemberIds, newPassword }),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        setShowBulkPasswordDialog(false);
+        setSelectedMemberIds([]);
+        alert(`เปลี่ยนรหัสผ่านสำเร็จ ${result.updated} คน`);
+      } else {
+        const error = await response.json();
+        alert(error.error || "เกิดข้อผิดพลาด");
+      }
+    } catch (error) {
+      console.error("Error bulk changing password:", error);
+      alert("เกิดข้อผิดพลาดในการเปลี่ยนรหัสผ่าน");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleImportCSV = async (file: File) => {
+    setIsLoading(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const response = await fetch("/api/settings/members/import-csv", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        setImportResult(result);
+        await refreshMembers();
+      } else {
+        const error = await response.json();
+        alert(error.error || "เกิดข้อผิดพลาด");
+      }
+    } catch (error) {
+      console.error("Error importing CSV:", error);
+      alert("เกิดข้อผิดพลาดในการนำเข้า");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleExportExcel = async () => {
+    try {
+      const response = await fetch("/api/settings/members/export-xlsx");
+
+      if (!response.ok) {
+        throw new Error("Export failed");
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `members_${new Date().toISOString().split("T")[0]}.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      a.remove();
+    } catch (error) {
+      console.error("Export error:", error);
+      alert("เกิดข้อผิดพลาดในการส่งออก");
+    }
+  };
+
+  const handleDownloadTemplate = async () => {
+    try {
+      const response = await fetch("/api/settings/members/template-csv");
+
+      if (!response.ok) {
+        throw new Error("Download failed");
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "members_template.csv";
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      a.remove();
+    } catch (error) {
+      console.error("Download error:", error);
+      alert("เกิดข้อผิดพลาดในการดาวน์โหลด");
+    }
+  };
+
+  const refreshMembers = async () => {
+    try {
+      const response = await fetch("/api/settings/members");
+      if (response.ok) {
+        const data = await response.json();
+        setMembers(data);
+      }
+    } catch (error) {
+      console.error("Error refreshing members:", error);
+    }
+  };
+
   return (
     <div className="min-h-screen">
       {/* Decorative background */}
@@ -702,6 +924,13 @@ export function SettingsClient({
             >
               <Database className="w-4 h-4 mr-2" />
               ข้อมูลพื้นฐาน
+            </TabsTrigger>
+            <TabsTrigger
+              value="members"
+              className="rounded-xl px-6 py-3 data-[state=active]:bg-gradient-to-r data-[state=active]:from-kram-500 data-[state=active]:to-cyan-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300"
+            >
+              <User className="w-4 h-4 mr-2" />
+              จัดการผู้ใช้งาน
             </TabsTrigger>
             <TabsTrigger
               value="config"
@@ -1399,7 +1628,197 @@ export function SettingsClient({
             )}
           </TabsContent>
 
-          {/* Tab 3: Site Configuration */}
+          {/* Tab 3: Members Management */}
+          <TabsContent value="members" className="space-y-6 animate-fade-in">
+            <Card className="border-0 bg-white/70 backdrop-blur-sm shadow-xl shadow-kram-900/5">
+              <div className="h-1 bg-gradient-to-r from-purple-500 via-pink-500 to-purple-500" />
+              <CardHeader className="pb-4">
+                <div className="flex justify-between items-center">
+                  <SectionHeader
+                    icon={User}
+                    title="จัดการผู้ใช้งาน"
+                    subtitle={`ทั้งหมด ${members.length} คน`}
+                  />
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={() => {
+                        setEditingMember(null);
+                        setShowMemberDialog(true);
+                      }}
+                      className="bg-gradient-to-r from-kram-500 to-cyan-500 hover:from-kram-600 hover:to-cyan-600"
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      เพิ่มผู้ใช้งาน
+                    </Button>
+                    <Button
+                      onClick={handleDownloadTemplate}
+                      variant="outline"
+                      className="border-emerald-300 text-emerald-700 hover:bg-emerald-50"
+                    >
+                      <FileText className="w-4 h-4 mr-2" />
+                      ดาวน์โหลด Template CSV
+                    </Button>
+                    <Button
+                      onClick={() => setShowImportDialog(true)}
+                      variant="outline"
+                      className="border-blue-300 text-blue-700 hover:bg-blue-50"
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      นำเข้า CSV
+                    </Button>
+                    <Button
+                      onClick={handleExportExcel}
+                      variant="outline"
+                      className="border-amber-300 text-amber-700 hover:bg-amber-50"
+                    >
+                      <FileText className="w-4 h-4 mr-2" />
+                      ส่งออก Excel
+                    </Button>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {selectedMemberIds.length > 0 && (
+                  <div className="mb-4 p-3 bg-kram-50 rounded-lg flex items-center justify-between">
+                    <span className="text-sm text-kram-700">
+                      เลือกแล้ว {selectedMemberIds.length} คน
+                    </span>
+                    <div className="flex gap-2">
+                      <Button
+                        onClick={() => setShowBulkPasswordDialog(true)}
+                        size="sm"
+                        variant="outline"
+                        className="border-purple-300 text-purple-700 hover:bg-purple-50"
+                      >
+                        เปลี่ยนรหัสผ่านหลายคน
+                      </Button>
+                      <Button
+                        onClick={() => setSelectedMemberIds([])}
+                        size="sm"
+                        variant="outline"
+                      >
+                        ยกเลิกการเลือก
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b border-kram-100">
+                        <th className="text-left p-3 text-sm font-semibold text-kram-700">
+                          <input
+                            type="checkbox"
+                            checked={selectedMemberIds.length === members.length && members.length > 0}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setSelectedMemberIds(members.map((m) => m.id));
+                              } else {
+                                setSelectedMemberIds([]);
+                              }
+                            }}
+                            className="rounded border-kram-300"
+                          />
+                        </th>
+                        <th className="text-left p-3 text-sm font-semibold text-kram-700">
+                          Email
+                        </th>
+                        <th className="text-left p-3 text-sm font-semibold text-kram-700">
+                          โรงพยาบาล
+                        </th>
+                        <th className="text-left p-3 text-sm font-semibold text-kram-700">
+                          ประเภท
+                        </th>
+                        <th className="text-left p-3 text-sm font-semibold text-kram-700">
+                          สร้างเมื่อ
+                        </th>
+                        <th className="text-right p-3 text-sm font-semibold text-kram-700">
+                          จัดการ
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {members.map((member) => (
+                        <tr
+                          key={member.id}
+                          className="border-b border-kram-50 hover:bg-kram-50/50 transition-colors"
+                        >
+                          <td className="p-3">
+                            <input
+                              type="checkbox"
+                              checked={selectedMemberIds.includes(member.id)}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setSelectedMemberIds([...selectedMemberIds, member.id]);
+                                } else {
+                                  setSelectedMemberIds(selectedMemberIds.filter((id) => id !== member.id));
+                                }
+                              }}
+                              className="rounded border-kram-300"
+                            />
+                          </td>
+                          <td className="p-3 text-sm text-kram-900">
+                            {member.email}
+                          </td>
+                          <td className="p-3 text-sm text-kram-700">
+                            {member.hospital
+                              ? `${member.hospital.name} (${member.hospital.code})`
+                              : "-"}
+                          </td>
+                          <td className="p-3">
+                            <Badge
+                              variant={member.memberType === 99 ? "default" : "secondary"}
+                              className={member.memberType === 99 ? "bg-red-500" : ""}
+                            >
+                              {member.memberType === 99 ? "Admin" : "Hospital"}
+                            </Badge>
+                          </td>
+                          <td className="p-3 text-sm text-kram-600">
+                            {new Date(member.createdAt).toLocaleDateString("th-TH")}
+                          </td>
+                          <td className="p-3 text-right space-x-2">
+                            <Button
+                              onClick={() => {
+                                setEditingMember(member);
+                                setShowMemberDialog(true);
+                              }}
+                              size="sm"
+                              variant="ghost"
+                              className="text-kram-600 hover:text-kram-900"
+                            >
+                              <Pencil className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              onClick={() => {
+                                setEditingMember(member);
+                                setShowPasswordDialog(true);
+                              }}
+                              size="sm"
+                              variant="ghost"
+                              className="text-purple-600 hover:text-purple-900"
+                            >
+                              <X className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              onClick={() => handleDeleteMember(member.id)}
+                              size="sm"
+                              variant="ghost"
+                              className="text-red-600 hover:text-red-900"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Tab 4: Site Configuration */}
           <TabsContent value="config" className="space-y-6 animate-fade-in">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Site Config */}
@@ -1686,6 +2105,49 @@ export function SettingsClient({
         editingItem={editingAirline}
         onSave={handleSaveAirline}
         isSaving={isSaving}
+      />
+
+      {/* Member Dialogs */}
+      <MemberFormDialog
+        open={showMemberDialog}
+        onClose={() => {
+          setShowMemberDialog(false);
+          setEditingMember(null);
+        }}
+        member={editingMember}
+        hospitals={hospitals}
+        onSave={handleSaveMember}
+        isSaving={isSaving}
+      />
+
+      <PasswordChangeDialog
+        open={showPasswordDialog}
+        onClose={() => {
+          setShowPasswordDialog(false);
+          setEditingMember(null);
+        }}
+        member={editingMember}
+        onChange={handleChangePassword}
+        isSaving={isSaving}
+      />
+
+      <BulkPasswordDialog
+        open={showBulkPasswordDialog}
+        onClose={() => setShowBulkPasswordDialog(false)}
+        selectedCount={selectedMemberIds.length}
+        onChange={handleBulkPasswordChange}
+        isSaving={isSaving}
+      />
+
+      <CSVImportDialog
+        open={showImportDialog}
+        onClose={() => {
+          setShowImportDialog(false);
+          setImportResult(null);
+        }}
+        onImport={handleImportCSV}
+        result={importResult}
+        isLoading={isLoading}
       />
     </div>
   );
@@ -2352,3 +2814,396 @@ function AirlineFormDialog({
     </Dialog>
   );
 }
+
+// Member Form Dialog Component
+function MemberFormDialog({
+  open,
+  onClose,
+  member,
+  hospitals,
+  onSave,
+  isSaving,
+}: {
+  open: boolean;
+  onClose: () => void;
+  member: Member | null;
+  hospitals: Hospital[];
+  onSave: (data: any) => Promise<void>;
+  isSaving: boolean;
+}) {
+  const [form, setForm] = useState({
+    email: "",
+    password: "",
+    hospitalCode: "",
+    memberType: "1",
+  });
+
+  useEffect(() => {
+    if (member) {
+      setForm({
+        email: member.email,
+        password: "",
+        hospitalCode: member.hospitalCode || "",
+        memberType: member.memberType.toString(),
+      });
+    } else {
+      setForm({
+        email: "",
+        password: "",
+        hospitalCode: "",
+        memberType: "1",
+      });
+    }
+  }, [member]);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const data: any = {
+      email: form.email,
+      memberType: parseInt(form.memberType),
+      hospitalCode: form.hospitalCode || null,
+    };
+    if (form.password) {
+      data.password = form.password;
+    }
+    onSave(data);
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <User className="w-5 h-5 text-purple-500" />
+            {member ? "แก้ไขผู้ใช้งาน" : "เพิ่มผู้ใช้งาน"}
+          </DialogTitle>
+        </DialogHeader>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <Label>Email *</Label>
+            <Input
+              type="email"
+              value={form.email}
+              onChange={(e) => setForm({ ...form, email: e.target.value })}
+              placeholder="example@hospital.com"
+              required
+              disabled={!!member}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label>รหัสผ่าน {!member && "*"}</Label>
+            <Input
+              type="password"
+              value={form.password}
+              onChange={(e) => setForm({ ...form, password: e.target.value })}
+              placeholder={member ? "ไม่ต้องกรอกหากไม่เปลี่ยน" : "รหัสผ่าน (อย่างน้อย 6 ตัวอักษร)"}
+              required={!member}
+              minLength={6}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label>ประเภทผู้ใช้งาน *</Label>
+            <select
+              value={form.memberType}
+              onChange={(e) => setForm({ ...form, memberType: e.target.value })}
+              className="w-full p-2 border border-kram-200 rounded-lg"
+              required
+            >
+              <option value="1">Hospital</option>
+              <option value="99">Admin</option>
+            </select>
+          </div>
+
+          <div className="space-y-2">
+            <Label>โรงพยาบาล *</Label>
+            <select
+              value={form.hospitalCode}
+              onChange={(e) => setForm({ ...form, hospitalCode: e.target.value })}
+              className="w-full p-2 border border-kram-200 rounded-lg"
+              required={form.memberType === "1"}
+            >
+              <option value="">-- เลือกโรงพยาบาล --</option>
+              {hospitals.map((h) => (
+                <option key={h.code} value={h.code}>
+                  {h.name} ({h.code})
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={onClose}>
+              ยกเลิก
+            </Button>
+            <Button
+              type="submit"
+              disabled={isSaving}
+              className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white"
+            >
+              {isSaving ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <Save className="w-4 h-4 mr-2" />
+              )}
+              บันทึก
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// Password Change Dialog Component
+function PasswordChangeDialog({
+  open,
+  onClose,
+  member,
+  onChange,
+  isSaving,
+}: {
+  open: boolean;
+  onClose: () => void;
+  member: Member | null;
+  onChange: (password: string) => Promise<void>;
+  isSaving: boolean;
+}) {
+  const [password, setPassword] = useState("");
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onChange(password);
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <X className="w-5 h-5 text-purple-500" />
+            เปลี่ยนรหัสผ่าน
+          </DialogTitle>
+        </DialogHeader>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="text-sm text-kram-600 bg-kram-50 p-3 rounded-lg">
+            กำลังเปลี่ยนรหัสผ่านสำหรับ: <strong>{member?.email}</strong>
+          </div>
+
+          <div className="space-y-2">
+            <Label>รหัสผ่านใหม่ *</Label>
+            <Input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="รหัสผ่านใหม่ (อย่างน้อย 6 ตัวอักษร)"
+              required
+              minLength={6}
+            />
+          </div>
+
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={onClose}>
+              ยกเลิก
+            </Button>
+            <Button
+              type="submit"
+              disabled={isSaving}
+              className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white"
+            >
+              {isSaving ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <Save className="w-4 h-4 mr-2" />
+              )}
+              เปลี่ยนรหัสผ่าน
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// Bulk Password Change Dialog Component
+function BulkPasswordDialog({
+  open,
+  onClose,
+  selectedCount,
+  onChange,
+  isSaving,
+}: {
+  open: boolean;
+  onClose: () => void;
+  selectedCount: number;
+  onChange: (password: string) => Promise<void>;
+  isSaving: boolean;
+}) {
+  const [password, setPassword] = useState("");
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onChange(password);
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <User className="w-5 h-5 text-purple-500" />
+            เปลี่ยนรหัสผ่านหลายคน
+          </DialogTitle>
+        </DialogHeader>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="text-sm text-kram-600 bg-kram-50 p-3 rounded-lg">
+            จะเปลี่ยนรหัสผ่านสำหรับ <strong>{selectedCount}</strong> คน
+          </div>
+
+          <div className="space-y-2">
+            <Label>รหัสผ่านใหม่ (ใช้สำหรับทุกคน) *</Label>
+            <Input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="รหัสผ่านใหม่ (อย่างน้อย 6 ตัวอักษร)"
+              required
+              minLength={6}
+            />
+          </div>
+
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={onClose}>
+              ยกเลิก
+            </Button>
+            <Button
+              type="submit"
+              disabled={isSaving}
+              className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white"
+            >
+              {isSaving ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <Save className="w-4 h-4 mr-2" />
+              )}
+              เปลี่ยนรหัสผ่าน
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// CSV Import Dialog Component
+function CSVImportDialog({
+  open,
+  onClose,
+  onImport,
+  result,
+  isLoading,
+}: {
+  open: boolean;
+  onClose: () => void;
+  onImport: (file: File) => Promise<void>;
+  result: any;
+  isLoading: boolean;
+}) {
+  const [file, setFile] = useState<File | null>(null);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (file) {
+      onImport(file);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <FileText className="w-5 h-5 text-blue-500" />
+            นำเข้าผู้ใช้งานจาก CSV
+          </DialogTitle>
+        </DialogHeader>
+
+        {!result ? (
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label>เลือกไฟล์ CSV *</Label>
+              <Input
+                type="file"
+                accept=".csv"
+                onChange={(e) => setFile(e.target.files?.[0] || null)}
+                required
+              />
+              <p className="text-xs text-kram-600">
+                ไฟล์ต้องเป็น .csv และมี columns: email, password, hospitalCode,
+                memberType
+              </p>
+            </div>
+
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={onClose}>
+                ยกเลิก
+              </Button>
+              <Button
+                type="submit"
+                disabled={isLoading || !file}
+                className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white"
+              >
+                {isLoading ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <Plus className="w-4 h-4 mr-2" />
+                )}
+                นำเข้า
+              </Button>
+            </DialogFooter>
+          </form>
+        ) : (
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="bg-emerald-50 p-4 rounded-lg">
+                <div className="text-sm text-emerald-600">สำเร็จ</div>
+                <div className="text-2xl font-bold text-emerald-700">
+                  {result.successCount}
+                </div>
+              </div>
+              <div className="bg-red-50 p-4 rounded-lg">
+                <div className="text-sm text-red-600">ล้มเหลว</div>
+                <div className="text-2xl font-bold text-red-700">
+                  {result.failedCount}
+                </div>
+              </div>
+            </div>
+
+            {result.errors && result.errors.length > 0 && (
+              <div className="max-h-60 overflow-y-auto space-y-2">
+                <div className="text-sm font-semibold text-kram-700">
+                  รายการที่มีข้อผิดพลาด:
+                </div>
+                {result.errors.map((error: any, idx: number) => (
+                  <div
+                    key={idx}
+                    className="text-xs bg-red-50 p-2 rounded border-l-2 border-red-500"
+                  >
+                    <strong>แถว {error.row}:</strong> {error.email} -{" "}
+                    {error.error}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <DialogFooter>
+              <Button onClick={onClose}>ปิด</Button>
+            </DialogFooter>
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}
+

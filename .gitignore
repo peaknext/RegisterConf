@@ -47,3 +47,4 @@ public/uploads/
 # Database dumps
 vachira_register.sql
 logs/
+.claude/settings.local.json
