@@ -43,3 +43,6 @@ prisma/migrations/
 
 # User uploads
 public/uploads/
+
+# Database dumps
+vachira_register.sql
