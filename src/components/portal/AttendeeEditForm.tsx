@@ -280,9 +280,10 @@ export function AttendeeEditForm({
                 className="w-full mt-1 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
               >
                 <option value="">เลือกประเภทอาหาร</option>
-                <option value="1">ปกติ</option>
-                <option value="2">มังสวิรัติ</option>
-                <option value="3">อิสลาม</option>
+                <option value="1">อาหารทั่วไป</option>
+                <option value="2">อาหารอิสลาม</option>
+                <option value="3">อาหารมังสวิรัติ</option>
+                <option value="4">อาหารเจ</option>
               </select>
             </div>
 

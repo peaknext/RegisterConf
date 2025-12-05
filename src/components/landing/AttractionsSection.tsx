@@ -37,7 +37,7 @@ const defaultAttractions: Attraction[] = [
     name: "พระธาตุเชิงชุม",
     description:
       "พระธาตุคู่บ้านคู่เมืองสกลนคร สร้างในสมัยทวารวดี ภายในบรรจุพระบรมสารีริกธาตุ เป็นศูนย์รวมจิตใจของชาวสกลนคร",
-    imageUrl: "/attractions/pra_that_choeng_chum.png",
+    imageUrl: "/ThatChoengChum.jpg",
     category: "temple",
     mapUrl: "https://maps.google.com/?q=พระธาตุเชิงชุม+สกลนคร",
     distance: "2 กม.",
@@ -48,7 +48,7 @@ const defaultAttractions: Attraction[] = [
     name: "หนองหาร",
     description:
       "ทะเลสาบน้ำจืดขนาดใหญ่ที่สุดในภาคอีสาน มีเนื้อที่กว่า 123 ตารางกิโลเมตร เป็นแหล่งที่อยู่ของบัวแดงนานาพันธุ์",
-    imageUrl: "/attractions/nong_han.png",
+    imageUrl: "/Nongharn.jpg",
     category: "nature",
     mapUrl: "https://maps.google.com/?q=หนองหาร+สกลนคร",
     distance: "5 กม.",
@@ -59,7 +59,7 @@ const defaultAttractions: Attraction[] = [
     name: "ภูพาน",
     description:
       "อุทยานแห่งชาติภูพาน ครอบคลุมพื้นที่ป่าเขาสูงสลับซับซ้อน เป็นแหล่งที่อยู่อาศัยของสัตว์ป่าหายากมากมาย",
-    imageUrl: "/attractions/phu_phan.png",
+    imageUrl: "/PhuPhan.jpg",
     category: "nature",
     mapUrl: "https://maps.google.com/?q=อุทยานแห่งชาติภูพาน",
     distance: "45 กม.",
@@ -70,7 +70,7 @@ const defaultAttractions: Attraction[] = [
     name: "วัดพระธาตุนารายณ์เจงเวง",
     description:
       "พระธาตุเก่าแก่สมัยขอม อายุกว่า 1,000 ปี สร้างด้วยศิลาแลงและหินทราย มีลักษณะคล้ายปราสาทขอม",
-    imageUrl: "/attractions/narai_jeng_weng.png",
+    imageUrl: "/ChengWeng.jpg",
     category: "temple",
     mapUrl: "https://maps.google.com/?q=วัดพระธาตุนารายณ์เจงเวง",
     distance: "8 กม.",
@@ -81,7 +81,7 @@ const defaultAttractions: Attraction[] = [
     name: "สวนสมเด็จพระศรีนครินทร์",
     description:
       "สวนสาธารณะขนาดใหญ่ริมหนองหาร มีทางเดินเลียบริมน้ำ สวนดอกไม้ และลานออกกำลังกาย เหมาะแก่การพักผ่อน",
-    imageUrl: "/attractions/suan_somdej.png",
+    imageUrl: "/Suan.jpg",
     category: "landmark",
     mapUrl: "https://maps.google.com/?q=สวนสมเด็จพระศรีนครินทร์+สกลนคร",
     distance: "3 กม.",
@@ -92,7 +92,7 @@ const defaultAttractions: Attraction[] = [
     name: "พิพิธภัณฑ์ภูพาน",
     description:
       "แหล่งเรียนรู้ประวัติศาสตร์และวัฒนธรรมของภาคอีสาน จัดแสดงโบราณวัตถุ เครื่องมือเครื่องใช้ และวิถีชีวิตชาวภูพาน",
-    imageUrl: "/attractions/museum.png",
+    imageUrl: "/PhuPhanMuseum.jpg",
     category: "cultural",
     mapUrl: "https://maps.google.com/?q=พิพิธภัณฑ์ภูพาน",
     distance: "40 กม.",

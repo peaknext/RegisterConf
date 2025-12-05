@@ -11,15 +11,16 @@ const statusLabels: Record<number, string> = {
 
 const vehicleLabels: Record<number, string> = {
   1: "เครื่องบิน",
-  2: "รถบัส",
-  3: "รถไฟ",
-  4: "รถส่วนตัว",
+  2: "รถโดยสาร",
+  3: "รถยนต์ส่วนตัว/ราชการ",
+  4: "รถไฟ",
 };
 
 const foodLabels: Record<number, string> = {
-  1: "ปกติ",
-  2: "มังสวิรัติ",
-  3: "อิสลาม",
+  1: "อาหารทั่วไป",
+  2: "อาหารอิสลาม",
+  3: "อาหารมังสวิรัติ",
+  4: "อาหารเจ",
 };
 
 export async function GET(request: Request) {
@@ -121,7 +122,7 @@ export async function GET(request: Request) {
             outLine = a.busLine1 || "";
             inDate = a.busDate2?.toISOString().split("T")[0] || "";
             inLine = a.busLine2 || "";
-          } else if (a.vehicleType === 3) {
+          } else if (a.vehicleType === 4) {
             outDate = a.trainDate1?.toISOString().split("T")[0] || "";
             outLine = a.trainLine1 || "";
             inDate = a.trainDate2?.toISOString().split("T")[0] || "";

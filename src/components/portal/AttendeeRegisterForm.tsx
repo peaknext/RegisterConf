@@ -116,15 +116,16 @@ interface AttendeeRegisterFormProps {
 
 const vehicleTypes = [
   { value: "1", label: "เครื่องบิน", icon: Plane },
-  { value: "2", label: "รถบัส", icon: Bus },
-  { value: "3", label: "รถไฟ", icon: Train },
-  { value: "4", label: "รถส่วนตัว", icon: Car },
+  { value: "2", label: "รถโดยสาร", icon: Bus },
+  { value: "3", label: "รถยนต์ส่วนตัว/ราชการ", icon: Car },
+  { value: "4", label: "รถไฟ", icon: Train },
 ];
 
 const foodTypes = [
-  { value: "1", label: "ปกติ" },
-  { value: "2", label: "มังสวิรัติ" },
-  { value: "3", label: "อิสลาม" },
+  { value: "1", label: "อาหารทั่วไป" },
+  { value: "2", label: "อาหารอิสลาม" },
+  { value: "3", label: "อาหารมังสวิรัติ" },
+  { value: "4", label: "อาหารเจ" },
 ];
 
 const prefixOptions = [
@@ -299,7 +300,7 @@ export function AttendeeRegisterForm({
     const provinces = hospitals
       .filter((h) => h.zoneCode === formData.zoneCode && h.province)
       .map((h) => h.province as string);
-    return [...new Set(provinces)].sort();
+    return Array.from(new Set(provinces)).sort();
   }, [hospitals, formData.zoneCode]);
 
   // Cascade: Get hospitals for selected zone + province
@@ -1337,7 +1338,7 @@ export function AttendeeRegisterForm({
                 <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-green-500 to-emerald-500 flex items-center justify-center">
                   <Bus className="w-5 h-5 text-white" />
                 </div>
-                รายละเอียดการเดินทางโดยรถบัส
+                รายละเอียดการเดินทางโดยรถโดยสาร
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -1465,7 +1466,7 @@ export function AttendeeRegisterForm({
         )}
 
         {/* Train Travel Details */}
-        {formData.vehicleType === "3" && (
+        {formData.vehicleType === "4" && (
           <Card className="border-0 shadow-lg shadow-kram-900/5">
             <div className="h-1 bg-gradient-to-r from-purple-500 to-violet-500 rounded-t-lg" />
             <CardHeader className="pb-4">

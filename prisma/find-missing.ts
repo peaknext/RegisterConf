@@ -133,7 +133,7 @@ async function main() {
     console.log(
       `\nHospital code ไม่มีในระบบ (${invalidHospitals.length} รายการ):`
     );
-    const uniqueHospitals = [...new Set(invalidHospitals.map((m) => m.hosCode))];
+    const uniqueHospitals = Array.from(new Set(invalidHospitals.map((m) => m.hosCode)));
     console.log(uniqueHospitals.join(", "));
   }
 

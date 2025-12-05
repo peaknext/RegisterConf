@@ -99,11 +99,11 @@ export default async function AttendeeEditPage({
   }
 
   // Get distinct level groups
-  const levelGroups = [
-    ...new Set(
+  const levelGroups = Array.from(
+    new Set(
       levels.map((l) => l.group).filter((g): g is string => g !== null)
-    ),
-  ];
+    )
+  );
 
   return (
     <AttendeeRegisterForm

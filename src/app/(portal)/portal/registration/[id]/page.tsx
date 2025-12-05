@@ -15,16 +15,17 @@ const statusMap: Record<number, { label: string; variant: "default" | "secondary
 };
 
 const foodTypes: Record<number, string> = {
-  1: "ปกติ",
-  2: "มังสวิรัติ",
-  3: "อิสลาม",
+  1: "อาหารทั่วไป",
+  2: "อาหารอิสลาม",
+  3: "อาหารมังสวิรัติ",
+  4: "อาหารเจ",
 };
 
 const vehicleTypes: Record<number, string> = {
   1: "เครื่องบิน",
-  2: "รถบัส",
-  3: "รถไฟ",
-  4: "รถส่วนตัว",
+  2: "รถโดยสาร",
+  3: "รถยนต์ส่วนตัว/ราชการ",
+  4: "รถไฟ",
 };
 
 async function getAttendee(id: number, hospitalCode: string | null) {
@@ -207,7 +208,7 @@ export default async function AttendeeDetailPage({
               <div className="space-y-3 pt-2 border-t">
                 <div className="flex items-center gap-2 text-primary">
                   <Bus className="w-4 h-4" />
-                  <span className="font-medium">รถบัส</span>
+                  <span className="font-medium">รถโดยสาร</span>
                 </div>
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
@@ -224,7 +225,7 @@ export default async function AttendeeDetailPage({
               </div>
             )}
 
-            {attendee.vehicleType === 3 && (
+            {attendee.vehicleType === 4 && (
               <div className="space-y-3 pt-2 border-t">
                 <div className="flex items-center gap-2 text-primary">
                   <Train className="w-4 h-4" />
