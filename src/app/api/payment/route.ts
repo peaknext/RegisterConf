@@ -15,6 +15,7 @@ export async function POST(request: Request) {
     const file = formData.get("file") as File | null;
     const attendeeIds = formData.get("attendeeIds") as string;
     const memberId = formData.get("memberId") as string;
+    const paidDateStr = formData.get("paidDate") as string | null;
 
     if (!file || !attendeeIds) {
       return NextResponse.json(
@@ -22,6 +23,9 @@ export async function POST(request: Request) {
         { status: 400 }
       );
     }
+
+    // Parse paid date from ISO string
+    const paidDate = paidDateStr ? new Date(paidDateStr) : null;
 
     // Generate unique filename
     const timestamp = Date.now();
@@ -44,6 +48,7 @@ export async function POST(request: Request) {
         attendeeIds: attendeeIds,
         fileName: `/uploads/payments/${fileName}`,
         status: 1, // รอตรวจสอบ
+        paidDate: paidDate,
       },
     });
 

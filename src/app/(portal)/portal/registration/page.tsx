@@ -5,11 +5,25 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { Plus, Eye, Edit, Search, ChevronUp, ChevronDown, ChevronsUpDown } from "lucide-react";
+import {
+  Plus,
+  Eye,
+  Edit,
+  Search,
+  ChevronUp,
+  ChevronDown,
+  ChevronsUpDown,
+} from "lucide-react";
 import { AttendeeSearch } from "@/components/portal/AttendeeSearch";
 import { AttendeePagination } from "@/components/portal/AttendeePagination";
 
-const statusMap: Record<number, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
+const statusMap: Record<
+  number,
+  {
+    label: string;
+    variant: "default" | "secondary" | "destructive" | "outline";
+  }
+> = {
   1: { label: "ค้างชำระ", variant: "secondary" },
   2: { label: "รอตรวจสอบ", variant: "outline" },
   3: { label: "ยกเลิก", variant: "destructive" },
@@ -54,7 +68,9 @@ async function getAttendees(
       { email: { contains: search, mode: "insensitive" } },
       { hospital: { name: { contains: search, mode: "insensitive" } } },
       { hospital: { province: { contains: search, mode: "insensitive" } } },
-      { hospital: { zone: { name: { contains: search, mode: "insensitive" } } } },
+      {
+        hospital: { zone: { name: { contains: search, mode: "insensitive" } } },
+      },
     ];
   }
 
@@ -107,7 +123,15 @@ async function getAttendees(
   return { attendees, total };
 }
 
-function SortIcon({ field, currentField, currentOrder }: { field: SortField; currentField?: SortField; currentOrder?: SortOrder }) {
+function SortIcon({
+  field,
+  currentField,
+  currentOrder,
+}: {
+  field: SortField;
+  currentField?: SortField;
+  currentOrder?: SortOrder;
+}) {
   if (field !== currentField) {
     return <ChevronsUpDown className="w-4 h-4 ml-1 text-gray-400" />;
   }
@@ -118,7 +142,14 @@ function SortIcon({ field, currentField, currentOrder }: { field: SortField; cur
   );
 }
 
-function getSortUrl(field: SortField, currentField?: SortField, currentOrder?: SortOrder, search?: string, hidePaid?: boolean, limit?: number) {
+function getSortUrl(
+  field: SortField,
+  currentField?: SortField,
+  currentOrder?: SortOrder,
+  search?: string,
+  hidePaid?: boolean,
+  limit?: number
+) {
   const params = new URLSearchParams();
   if (search) params.set("search", search);
   if (hidePaid) params.set("hidePaid", "true");
@@ -141,7 +172,14 @@ function getSortUrl(field: SortField, currentField?: SortField, currentOrder?: S
 export default async function RegistrationPage({
   searchParams,
 }: {
-  searchParams: Promise<{ search?: string; sort?: SortField; order?: SortOrder; page?: string; hidePaid?: string; limit?: string }>;
+  searchParams: Promise<{
+    search?: string;
+    sort?: SortField;
+    order?: SortOrder;
+    page?: string;
+    hidePaid?: string;
+    limit?: string;
+  }>;
 }) {
   const session = await auth();
   if (!session) redirect("/login");
@@ -207,41 +245,87 @@ export default async function RegistrationPage({
                 <table className="w-full">
                   <thead>
                     <tr className="border-b text-left">
-                      <th className="pb-3 font-medium text-gray-500 w-16">ลำดับ</th>
+                      <th className="pb-3 font-medium text-gray-500 w-16">
+                        ลำดับ
+                      </th>
                       <th className="pb-3 font-medium text-gray-500">
                         <Link
-                          href={getSortUrl("hospital", sortField, sortOrder, params.search, hidePaid, limit)}
+                          href={getSortUrl(
+                            "hospital",
+                            sortField,
+                            sortOrder,
+                            params.search,
+                            hidePaid,
+                            limit
+                          )}
                           className="flex items-center hover:text-gray-900"
                         >
                           สถานที่ปฏิบัติงาน
-                          <SortIcon field="hospital" currentField={sortField} currentOrder={sortOrder} />
+                          <SortIcon
+                            field="hospital"
+                            currentField={sortField}
+                            currentOrder={sortOrder}
+                          />
                         </Link>
                       </th>
                       <th className="pb-3 font-medium text-gray-500">
                         <Link
-                          href={getSortUrl("name", sortField, sortOrder, params.search, hidePaid, limit)}
+                          href={getSortUrl(
+                            "name",
+                            sortField,
+                            sortOrder,
+                            params.search,
+                            hidePaid,
+                            limit
+                          )}
                           className="flex items-center hover:text-gray-900"
                         >
                           ชื่อ-สกุล
-                          <SortIcon field="name" currentField={sortField} currentOrder={sortOrder} />
+                          <SortIcon
+                            field="name"
+                            currentField={sortField}
+                            currentOrder={sortOrder}
+                          />
                         </Link>
                       </th>
                       <th className="pb-3 font-medium text-gray-500">
                         <Link
-                          href={getSortUrl("position", sortField, sortOrder, params.search, hidePaid, limit)}
+                          href={getSortUrl(
+                            "position",
+                            sortField,
+                            sortOrder,
+                            params.search,
+                            hidePaid,
+                            limit
+                          )}
                           className="flex items-center hover:text-gray-900"
                         >
-                          วิชาชีพระดับ
-                          <SortIcon field="position" currentField={sortField} currentOrder={sortOrder} />
+                          วิชาชีพ
+                          <SortIcon
+                            field="position"
+                            currentField={sortField}
+                            currentOrder={sortOrder}
+                          />
                         </Link>
                       </th>
                       <th className="pb-3 font-medium text-gray-500">
                         <Link
-                          href={getSortUrl("status", sortField, sortOrder, params.search, hidePaid, limit)}
+                          href={getSortUrl(
+                            "status",
+                            sortField,
+                            sortOrder,
+                            params.search,
+                            hidePaid,
+                            limit
+                          )}
                           className="flex items-center hover:text-gray-900"
                         >
                           สถานะ
-                          <SortIcon field="status" currentField={sortField} currentOrder={sortOrder} />
+                          <SortIcon
+                            field="status"
+                            currentField={sortField}
+                            currentOrder={sortOrder}
+                          />
                         </Link>
                       </th>
                       <th className="pb-3 font-medium text-gray-500 text-right">
@@ -279,16 +363,22 @@ export default async function RegistrationPage({
                             </span>
                           </td>
                           <td className="py-4">
-                            <Badge variant={status.variant}>{status.label}</Badge>
+                            <Badge variant={status.variant}>
+                              {status.label}
+                            </Badge>
                           </td>
                           <td className="py-4">
                             <div className="flex justify-end gap-2">
-                              <Link href={`/portal/registration/${attendee.id}`}>
+                              <Link
+                                href={`/portal/registration/${attendee.id}`}
+                              >
                                 <Button variant="ghost" size="sm" title="ดู">
                                   <Eye className="w-4 h-4" />
                                 </Button>
                               </Link>
-                              <Link href={`/portal/registration/${attendee.id}/edit`}>
+                              <Link
+                                href={`/portal/registration/${attendee.id}/edit`}
+                              >
                                 <Button variant="ghost" size="sm" title="แก้ไข">
                                   <Edit className="w-4 h-4" />
                                 </Button>

@@ -1,13 +1,15 @@
-# Conference Registration System
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## Project Overview
-ระบบลงทะเบียนงานประชุมวิชาการ สำหรับโรงพยาบาลในเขตสุขภาพ
+ระบบลงทะเบียนงานประชุมวิชาการ สำหรับโรงพยาบาลในเขตสุขภาพ (Conference Registration System for Regional Hospitals)
 
 ## Tech Stack
 - Next.js 14 (App Router) + TypeScript
 - Prisma ORM + PostgreSQL
 - Tailwind CSS + shadcn/ui
-- NextAuth.js v5 (Auth.js)
+- NextAuth.js v5 (Auth.js) with JWT sessions
 - Docker
 
 ## Project Structure
@@ -41,6 +43,7 @@ npm run db:generate  # Generate Prisma client
 npm run db:push      # Push schema to database
 npm run db:migrate   # Run migrations
 npm run db:studio    # Open Prisma Studio
+npm run db:seed      # Seed initial data
 ```
 
 ## Database
@@ -90,11 +93,17 @@ npm run db:studio    # Open Prisma Studio
 - Handle errors gracefully
 
 ## Authentication
-- NextAuth.js v5 (Auth.js)
-- Credentials provider (email/password)
+- NextAuth.js v5 (Auth.js) with Credentials provider
+- Session extended with custom fields: `memberType`, `hospitalCode` (see `src/types/next-auth.d.ts`)
+- Password hashing: MD5 (legacy format)
 - Member types:
-  - `99` = Admin
-  - `1` = Hospital representative
+  - `99` = Admin (full access)
+  - `1` = Hospital representative (hospital-scoped access)
+
+### Route Protection (Middleware)
+- `/portal/*` - requires login
+- `/admin/*` - requires login + memberType=99
+- `/login` - redirects to `/portal/dashboard` if already logged in
 
 ## Docker
 ```bash
@@ -103,21 +112,19 @@ docker-compose down      # Stop containers
 docker-compose build     # Rebuild image
 ```
 
-## Key Files Reference
-| File | Purpose |
-|------|---------|
-| `prisma/schema.prisma` | Database schema |
-| `src/lib/prisma.ts` | Prisma client singleton |
-| `src/lib/utils.ts` | Utility functions |
-| `src/app/layout.tsx` | Root layout |
-| `src/app/globals.css` | Global styles + CSS variables |
-| `tailwind.config.ts` | Tailwind configuration |
-| `components.json` | shadcn/ui configuration |
+## Key Files
+- `prisma/schema.prisma` - Database schema (source of truth for data model)
+- `src/middleware.ts` - Route protection logic
+- `src/lib/auth.ts` - NextAuth configuration
+- `src/types/next-auth.d.ts` - Extended session/user types
 
-## Feature Flags
-- Landing Page: Public access
-- Portal: Requires login (hospital representative)
-- Admin: Requires login (member_type = 99)
+## API Routes
+- `/api/auth/*` - NextAuth handlers
+- `/api/attendees` - CRUD for registration entries
+- `/api/payment` - Payment submission (file upload)
+- `/api/master` - Master data (hospitals, levels, positions)
+- `/api/admin/*` - Admin-only endpoints (news, schedule, payments, slideshow)
+- `/api/reports/export` - Export reports
 
 ## Application Workflow
 
@@ -145,7 +152,9 @@ admin ตรวจสอบ → อัพเดท status
 | Table | Status | Description |
 |-------|--------|-------------|
 | attendee | 1 | ค้างชำระเงิน |
-| attendee | 2 | ชำระเงินแล้ว |
+| attendee | 2 | รอตรวจสอบ |
+| attendee | 3 | ยกเลิก |
+| attendee | 9 | ชำระแล้ว |
 | finance | 1 | รอตรวจสอบ |
 | finance | 2 | ผ่าน (ชำระเงินสำเร็จ) |
-| finance | 3 | ไม่ผ่าน |
+| finance | 9 | ไม่ผ่าน |
