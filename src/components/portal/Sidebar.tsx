@@ -19,6 +19,7 @@ import {
   LogOut,
   Building2,
   ChevronRight,
+  Settings,
 } from "lucide-react";
 
 interface SidebarProps {
@@ -33,14 +34,16 @@ const menuItems = [
   { label: "หน้าแรก", href: "/portal/dashboard", icon: Home },
   { label: "ตรวจสอบการลงทะเบียน", href: "/portal/registration", icon: Users },
   { label: "แจ้งชำระเงิน", href: "/portal/payment", icon: CreditCard },
-  { label: "ตรวจสอบชำระเงิน", href: "/portal/payment-status", icon: FileCheck },
-  { label: "แดชบอร์ด", href: "/portal/stats", icon: BarChart3 },
-  { label: "รายงาน", href: "/portal/reports", icon: FileText },
+  { label: "ตรวจสอบชำระเงิน", href: "/portal/payment-status", icon: FileCheck, adminOnly: true },
+  { label: "แดชบอร์ด", href: "/portal/stats", icon: BarChart3, adminOnly: true },
+  { label: "รายงาน", href: "/portal/reports", icon: FileText, adminOnly: true },
+  { label: "ตั้งค่า", href: "/portal/settings", icon: Settings, adminOnly: true },
 ];
 
 export function PortalSidebar({ user }: SidebarProps) {
   const pathname = usePathname();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const isAdmin = user.memberType === 99;
 
   const handleSignOut = () => {
     signOut({ callbackUrl: "/" });
@@ -88,6 +91,8 @@ export function PortalSidebar({ user }: SidebarProps) {
       {/* Navigation Menu */}
       <nav className="flex-1 p-3 mt-4 space-y-1 overflow-y-auto">
         {menuItems.map((item) => {
+          // Skip admin-only items for non-admin users
+          if (item.adminOnly && !isAdmin) return null;
           const isActive = pathname === item.href;
           return (
             <Link

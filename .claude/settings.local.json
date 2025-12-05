@@ -10,7 +10,8 @@
       "Bash(find:*)",
       "Bash(git push:*)",
       "Bash(pm2 delete:*)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(npx shadcn@latest add tabs:*)"
     ],
     "deny": [],
     "ask": []
