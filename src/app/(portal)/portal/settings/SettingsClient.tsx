@@ -44,6 +44,7 @@ import {
   Mail,
   Link,
   LayoutGrid,
+  Search,
 } from "lucide-react";
 
 // Types for all data models
@@ -226,9 +227,7 @@ function SectionHeader({
         </div>
         <div>
           <h2 className="text-lg font-semibold text-kram-900">{title}</h2>
-          {subtitle && (
-            <p className="text-sm text-kram-500">{subtitle}</p>
-          )}
+          {subtitle && <p className="text-sm text-kram-500">{subtitle}</p>}
         </div>
       </div>
       {action}
@@ -277,7 +276,9 @@ export function SettingsClient({
   const [hotels, setHotels] = useState(initialHotels);
   const [zones, setZones] = useState(initialZones);
   const [siteConfig, setSiteConfig] = useState(initialSiteConfig);
-  const [paymentSettings, setPaymentSettings] = useState(initialPaymentSettings);
+  const [paymentSettings, setPaymentSettings] = useState(
+    initialPaymentSettings
+  );
   const [members, setMembers] = useState(initialMembers);
 
   // UI state
@@ -298,6 +299,9 @@ export function SettingsClient({
   const [showBulkPasswordDialog, setShowBulkPasswordDialog] = useState(false);
   const [showImportDialog, setShowImportDialog] = useState(false);
 
+  // Search states
+  const [memberSearch, setMemberSearch] = useState("");
+
   // Edit item states
   const [editingNews, setEditingNews] = useState<News | null>(null);
   const [editingSchedule, setEditingSchedule] = useState<Schedule | null>(null);
@@ -311,9 +315,22 @@ export function SettingsClient({
   const [selectedMemberIds, setSelectedMemberIds] = useState<number[]>([]);
   const [importResult, setImportResult] = useState<any>(null);
 
+  // Filtered members based on search
+  const filteredMembers = useMemo(() => {
+    if (!memberSearch.trim()) return members;
+
+    const searchLower = memberSearch.toLowerCase();
+    return members.filter((member) => {
+      const email = member.email.toLowerCase();
+      const hospital = member.hospital?.name?.toLowerCase() || "";
+      return email.includes(searchLower) || hospital.includes(searchLower);
+    });
+  }, [members, memberSearch]);
+
   // Footer form state
   const [footerForm, setFooterForm] = useState({
-    organizerName: footerInfo.find((f) => f.key === "organizer_name")?.value || "",
+    organizerName:
+      footerInfo.find((f) => f.key === "organizer_name")?.value || "",
     address: footerInfo.find((f) => f.key === "address")?.value || "",
     phone: footerInfo.find((f) => f.key === "phone")?.value || "",
     email: footerInfo.find((f) => f.key === "email")?.value || "",
@@ -370,7 +387,9 @@ export function SettingsClient({
       if (response.ok) {
         const savedNews = await response.json();
         if (editingNews) {
-          setNews((prev) => prev.map((n) => (n.id === savedNews.id ? savedNews : n)));
+          setNews((prev) =>
+            prev.map((n) => (n.id === savedNews.id ? savedNews : n))
+          );
         } else {
           setNews((prev) => [savedNews, ...prev]);
         }
@@ -387,7 +406,9 @@ export function SettingsClient({
   const handleDeleteNews = async (id: number) => {
     if (!confirm("ต้องการลบข่าวสารนี้?")) return;
     try {
-      const response = await fetch(`/api/settings/news/${id}`, { method: "DELETE" });
+      const response = await fetch(`/api/settings/news/${id}`, {
+        method: "DELETE",
+      });
       if (response.ok) {
         setNews((prev) => prev.filter((n) => n.id !== id));
       }
@@ -414,12 +435,16 @@ export function SettingsClient({
       if (response.ok) {
         const savedSchedule = await response.json();
         if (editingSchedule) {
-          setSchedules((prev) => prev.map((s) => (s.id === savedSchedule.id ? savedSchedule : s)));
+          setSchedules((prev) =>
+            prev.map((s) => (s.id === savedSchedule.id ? savedSchedule : s))
+          );
         } else {
-          setSchedules((prev) => [...prev, savedSchedule].sort((a, b) => {
-            if (a.dayNumber !== b.dayNumber) return a.dayNumber - b.dayNumber;
-            return a.sortOrder - b.sortOrder;
-          }));
+          setSchedules((prev) =>
+            [...prev, savedSchedule].sort((a, b) => {
+              if (a.dayNumber !== b.dayNumber) return a.dayNumber - b.dayNumber;
+              return a.sortOrder - b.sortOrder;
+            })
+          );
         }
         setShowScheduleDialog(false);
         setEditingSchedule(null);
@@ -434,7 +459,9 @@ export function SettingsClient({
   const handleDeleteSchedule = async (id: number) => {
     if (!confirm("ต้องการลบกำหนดการนี้?")) return;
     try {
-      const response = await fetch(`/api/settings/schedule/${id}`, { method: "DELETE" });
+      const response = await fetch(`/api/settings/schedule/${id}`, {
+        method: "DELETE",
+      });
       if (response.ok) {
         setSchedules((prev) => prev.filter((s) => s.id !== id));
       }
@@ -482,9 +509,13 @@ export function SettingsClient({
       if (response.ok) {
         const savedZone = await response.json();
         if (editingZone) {
-          setZones((prev) => prev.map((z) => (z.id === savedZone.id ? savedZone : z)));
+          setZones((prev) =>
+            prev.map((z) => (z.id === savedZone.id ? savedZone : z))
+          );
         } else {
-          setZones((prev) => [...prev, savedZone].sort((a, b) => a.code.localeCompare(b.code)));
+          setZones((prev) =>
+            [...prev, savedZone].sort((a, b) => a.code.localeCompare(b.code))
+          );
         }
         setShowZoneDialog(false);
         setEditingZone(null);
@@ -497,9 +528,16 @@ export function SettingsClient({
   };
 
   const handleDeleteZone = async (id: string) => {
-    if (!confirm("ต้องการลบเขตสุขภาพนี้? โรงพยาบาลในเขตนี้จะไม่มีการเชื่อมโยงกับเขตสุขภาพ")) return;
+    if (
+      !confirm(
+        "ต้องการลบเขตสุขภาพนี้? โรงพยาบาลในเขตนี้จะไม่มีการเชื่อมโยงกับเขตสุขภาพ"
+      )
+    )
+      return;
     try {
-      const response = await fetch(`/api/settings/zones/${id}`, { method: "DELETE" });
+      const response = await fetch(`/api/settings/zones/${id}`, {
+        method: "DELETE",
+      });
       if (response.ok) {
         setZones((prev) => prev.filter((z) => z.id !== id));
       }
@@ -526,9 +564,15 @@ export function SettingsClient({
       if (response.ok) {
         const savedHospital = await response.json();
         if (editingHospital) {
-          setHospitals((prev) => prev.map((h) => (h.id === savedHospital.id ? savedHospital : h)));
+          setHospitals((prev) =>
+            prev.map((h) => (h.id === savedHospital.id ? savedHospital : h))
+          );
         } else {
-          setHospitals((prev) => [...prev, savedHospital].sort((a, b) => a.name.localeCompare(b.name)));
+          setHospitals((prev) =>
+            [...prev, savedHospital].sort((a, b) =>
+              a.name.localeCompare(b.name)
+            )
+          );
         }
         setShowHospitalDialog(false);
         setEditingHospital(null);
@@ -543,7 +587,9 @@ export function SettingsClient({
   const handleDeleteHospital = async (id: string) => {
     if (!confirm("ต้องการลบโรงพยาบาลนี้?")) return;
     try {
-      const response = await fetch(`/api/settings/hospitals/${id}`, { method: "DELETE" });
+      const response = await fetch(`/api/settings/hospitals/${id}`, {
+        method: "DELETE",
+      });
       if (response.ok) {
         setHospitals((prev) => prev.filter((h) => h.id !== id));
       }
@@ -570,9 +616,13 @@ export function SettingsClient({
       if (response.ok) {
         const savedHotel = await response.json();
         if (editingHotel) {
-          setHotels((prev) => prev.map((h) => (h.id === savedHotel.id ? savedHotel : h)));
+          setHotels((prev) =>
+            prev.map((h) => (h.id === savedHotel.id ? savedHotel : h))
+          );
         } else {
-          setHotels((prev) => [...prev, savedHotel].sort((a, b) => a.name.localeCompare(b.name)));
+          setHotels((prev) =>
+            [...prev, savedHotel].sort((a, b) => a.name.localeCompare(b.name))
+          );
         }
         setShowHotelDialog(false);
         setEditingHotel(null);
@@ -587,7 +637,9 @@ export function SettingsClient({
   const handleDeleteHotel = async (id: number) => {
     if (!confirm("ต้องการลบโรงแรมนี้?")) return;
     try {
-      const response = await fetch(`/api/settings/hotels/${id}`, { method: "DELETE" });
+      const response = await fetch(`/api/settings/hotels/${id}`, {
+        method: "DELETE",
+      });
       if (response.ok) {
         setHotels((prev) => prev.filter((h) => h.id !== id));
       }
@@ -614,7 +666,9 @@ export function SettingsClient({
       if (response.ok) {
         const savedAirline = await response.json();
         if (editingAirline) {
-          setAirlines((prev) => prev.map((a) => (a.id === savedAirline.id ? savedAirline : a)));
+          setAirlines((prev) =>
+            prev.map((a) => (a.id === savedAirline.id ? savedAirline : a))
+          );
         } else {
           setAirlines((prev) => [...prev, savedAirline]);
         }
@@ -631,7 +685,9 @@ export function SettingsClient({
   const handleDeleteAirline = async (id: number) => {
     if (!confirm("ต้องการลบสายการบินนี้?")) return;
     try {
-      const response = await fetch(`/api/settings/airlines/${id}`, { method: "DELETE" });
+      const response = await fetch(`/api/settings/airlines/${id}`, {
+        method: "DELETE",
+      });
       if (response.ok) {
         setAirlines((prev) => prev.filter((a) => a.id !== id));
       }
@@ -670,8 +726,12 @@ export function SettingsClient({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...paymentForm,
-          meetPrice: paymentForm.meetPrice ? parseFloat(paymentForm.meetPrice) : null,
-          meetPriceFollow: paymentForm.meetPriceFollow ? parseFloat(paymentForm.meetPriceFollow) : null,
+          meetPrice: paymentForm.meetPrice
+            ? parseFloat(paymentForm.meetPrice)
+            : null,
+          meetPriceFollow: paymentForm.meetPriceFollow
+            ? parseFloat(paymentForm.meetPriceFollow)
+            : null,
         }),
       });
 
@@ -687,7 +747,9 @@ export function SettingsClient({
   };
 
   // Member CRUD handlers
-  const handleSaveMember = async (data: Partial<Member> & { password?: string }) => {
+  const handleSaveMember = async (
+    data: Partial<Member> & { password?: string }
+  ) => {
     setIsSaving(true);
     try {
       const method = editingMember ? "PATCH" : "POST";
@@ -745,11 +807,14 @@ export function SettingsClient({
 
     setIsSaving(true);
     try {
-      const response = await fetch(`/api/settings/members/${editingMember.id}/password`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ newPassword }),
-      });
+      const response = await fetch(
+        `/api/settings/members/${editingMember.id}/password`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ newPassword }),
+        }
+      );
 
       if (response.ok) {
         setShowPasswordDialog(false);
@@ -909,32 +974,36 @@ export function SettingsClient({
         </div>
 
         {/* Main Tabs */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="bg-white/80 backdrop-blur-sm p-1.5 rounded-2xl border border-kram-100/50 shadow-lg shadow-kram-900/5 inline-flex">
+        <Tabs
+          value={activeTab}
+          onValueChange={setActiveTab}
+          className="space-y-6"
+        >
+          <TabsList className="bg-white/80 backdrop-blur-sm p-1.5 rounded-2xl border border-kram-100/50 shadow-lg shadow-kram-900/5 w-full flex gap-1">
             <TabsTrigger
               value="content"
-              className="rounded-xl px-6 py-3 data-[state=active]:bg-gradient-to-r data-[state=active]:from-kram-500 data-[state=active]:to-cyan-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300"
+              className="flex-1 flex items-center justify-center rounded-xl px-4 py-3 data-[state=active]:bg-gradient-to-r data-[state=active]:from-kram-500 data-[state=active]:to-cyan-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300"
             >
               <Newspaper className="w-4 h-4 mr-2" />
               เนื้อหา Landing Page
             </TabsTrigger>
             <TabsTrigger
               value="master"
-              className="rounded-xl px-6 py-3 data-[state=active]:bg-gradient-to-r data-[state=active]:from-kram-500 data-[state=active]:to-cyan-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300"
+              className="flex-1 flex items-center justify-center rounded-xl px-4 py-3 data-[state=active]:bg-gradient-to-r data-[state=active]:from-kram-500 data-[state=active]:to-cyan-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300"
             >
               <Database className="w-4 h-4 mr-2" />
               ข้อมูลพื้นฐาน
             </TabsTrigger>
             <TabsTrigger
               value="members"
-              className="rounded-xl px-6 py-3 data-[state=active]:bg-gradient-to-r data-[state=active]:from-kram-500 data-[state=active]:to-cyan-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300"
+              className="flex-1 flex items-center justify-center rounded-xl px-4 py-3 data-[state=active]:bg-gradient-to-r data-[state=active]:from-kram-500 data-[state=active]:to-cyan-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300"
             >
               <User className="w-4 h-4 mr-2" />
               จัดการผู้ใช้งาน
             </TabsTrigger>
             <TabsTrigger
               value="config"
-              className="rounded-xl px-6 py-3 data-[state=active]:bg-gradient-to-r data-[state=active]:from-kram-500 data-[state=active]:to-cyan-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300"
+              className="flex-1 flex items-center justify-center rounded-xl px-4 py-3 data-[state=active]:bg-gradient-to-r data-[state=active]:from-kram-500 data-[state=active]:to-cyan-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300"
             >
               <Cog className="w-4 h-4 mr-2" />
               ตั้งค่าทั่วไป
@@ -1039,11 +1108,15 @@ export function SettingsClient({
                                   {item.title}
                                 </p>
                                 <p className="text-sm text-kram-500">
-                                  {new Date(item.publishedAt).toLocaleDateString("th-TH")}
+                                  {new Date(
+                                    item.publishedAt
+                                  ).toLocaleDateString("th-TH")}
                                 </p>
                               </div>
                               <Badge
-                                variant={item.isPublished ? "default" : "secondary"}
+                                variant={
+                                  item.isPublished ? "default" : "secondary"
+                                }
                                 className={
                                   item.isPublished
                                     ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-200"
@@ -1120,7 +1193,9 @@ export function SettingsClient({
                                         variant="ghost"
                                         size="sm"
                                         className="text-red-500 hover:text-red-700 hover:bg-red-50"
-                                        onClick={() => handleDeleteSchedule(item.id)}
+                                        onClick={() =>
+                                          handleDeleteSchedule(item.id)
+                                        }
                                       >
                                         <Trash2 className="w-4 h-4" />
                                       </Button>
@@ -1182,7 +1257,10 @@ export function SettingsClient({
                           <Input
                             value={footerForm.organizerName}
                             onChange={(e) =>
-                              setFooterForm({ ...footerForm, organizerName: e.target.value })
+                              setFooterForm({
+                                ...footerForm,
+                                organizerName: e.target.value,
+                              })
                             }
                             placeholder="ชื่อหน่วยงานผู้จัดงาน"
                             className="rounded-xl border-kram-200 focus:border-emerald-400 focus:ring-emerald-400"
@@ -1193,7 +1271,10 @@ export function SettingsClient({
                           <Input
                             value={footerForm.email}
                             onChange={(e) =>
-                              setFooterForm({ ...footerForm, email: e.target.value })
+                              setFooterForm({
+                                ...footerForm,
+                                email: e.target.value,
+                              })
                             }
                             placeholder="email@example.com"
                             className="rounded-xl border-kram-200 focus:border-emerald-400 focus:ring-emerald-400"
@@ -1204,7 +1285,10 @@ export function SettingsClient({
                           <Textarea
                             value={footerForm.address}
                             onChange={(e) =>
-                              setFooterForm({ ...footerForm, address: e.target.value })
+                              setFooterForm({
+                                ...footerForm,
+                                address: e.target.value,
+                              })
                             }
                             placeholder="ที่อยู่ติดต่อ"
                             rows={2}
@@ -1216,7 +1300,10 @@ export function SettingsClient({
                           <Input
                             value={footerForm.phone}
                             onChange={(e) =>
-                              setFooterForm({ ...footerForm, phone: e.target.value })
+                              setFooterForm({
+                                ...footerForm,
+                                phone: e.target.value,
+                              })
                             }
                             placeholder="เบอร์โทรศัพท์"
                             className="rounded-xl border-kram-200 focus:border-emerald-400 focus:ring-emerald-400"
@@ -1227,7 +1314,10 @@ export function SettingsClient({
                           <Input
                             value={footerForm.fax}
                             onChange={(e) =>
-                              setFooterForm({ ...footerForm, fax: e.target.value })
+                              setFooterForm({
+                                ...footerForm,
+                                fax: e.target.value,
+                              })
                             }
                             placeholder="เบอร์โทรสาร"
                             className="rounded-xl border-kram-200 focus:border-emerald-400 focus:ring-emerald-400"
@@ -1359,9 +1449,17 @@ export function SettingsClient({
                               <Badge className="bg-violet-100 text-violet-700 hover:bg-violet-200">
                                 {item.code}
                               </Badge>
-                              <span className="font-medium text-kram-900">{item.name}</span>
+                              <span className="font-medium text-kram-900">
+                                {item.name}
+                              </span>
                               <span className="text-sm text-kram-400">
-                                ({hospitals.filter((h) => h.zoneCode === item.code).length} รพ.)
+                                (
+                                {
+                                  hospitals.filter(
+                                    (h) => h.zoneCode === item.code
+                                  ).length
+                                }{" "}
+                                รพ.)
                               </span>
                             </div>
                           </DataRow>
@@ -1434,7 +1532,9 @@ export function SettingsClient({
                                 {item.code}
                               </Badge>
                               <div className="flex-1 min-w-0">
-                                <p className="font-medium text-kram-900 truncate">{item.name}</p>
+                                <p className="font-medium text-kram-900 truncate">
+                                  {item.name}
+                                </p>
                                 <p className="text-sm text-kram-500">
                                   {item.province} • {item.zone?.name || "-"}
                                 </p>
@@ -1507,22 +1607,36 @@ export function SettingsClient({
                           >
                             <div className="flex items-center gap-4">
                               <div className="flex-1 min-w-0">
-                                <p className="font-medium text-kram-900">{item.name}</p>
-                                <p className="text-sm text-kram-500">{item.phone || "-"}</p>
+                                <p className="font-medium text-kram-900">
+                                  {item.name}
+                                </p>
+                                <p className="text-sm text-kram-500">
+                                  {item.phone || "-"}
+                                </p>
                               </div>
                               <div className="flex items-center gap-2">
                                 <Badge
-                                  variant={item.busFlag === "Y" ? "default" : "secondary"}
+                                  variant={
+                                    item.busFlag === "Y"
+                                      ? "default"
+                                      : "secondary"
+                                  }
                                   className={
                                     item.busFlag === "Y"
                                       ? "bg-emerald-100 text-emerald-700"
                                       : "bg-kram-100 text-kram-600"
                                   }
                                 >
-                                  {item.busFlag === "Y" ? "มีรถรับส่ง" : "ไม่มีรถ"}
+                                  {item.busFlag === "Y"
+                                    ? "มีรถรับส่ง"
+                                    : "ไม่มีรถ"}
                                 </Badge>
                                 <Badge
-                                  variant={item.status === "y" ? "default" : "secondary"}
+                                  variant={
+                                    item.status === "y"
+                                      ? "default"
+                                      : "secondary"
+                                  }
                                   className={
                                     item.status === "y"
                                       ? "bg-kram-100 text-kram-700"
@@ -1600,9 +1714,13 @@ export function SettingsClient({
                           >
                             <div className="flex items-center gap-4">
                               <Plane className="w-5 h-5 text-sky-500" />
-                              <span className="font-medium text-kram-900">{item.name}</span>
+                              <span className="font-medium text-kram-900">
+                                {item.name}
+                              </span>
                               <Badge
-                                variant={item.status === "y" ? "default" : "secondary"}
+                                variant={
+                                  item.status === "y" ? "default" : "secondary"
+                                }
                                 className={
                                   item.status === "y"
                                     ? "bg-sky-100 text-sky-700"
@@ -1637,9 +1755,24 @@ export function SettingsClient({
                   <SectionHeader
                     icon={User}
                     title="จัดการผู้ใช้งาน"
-                    subtitle={`ทั้งหมด ${members.length} คน`}
+                    subtitle={
+                      memberSearch
+                        ? `พบ ${filteredMembers.length} จาก ${members.length} คน`
+                        : `ทั้งหมด ${members.length} คน`
+                    }
                   />
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 items-center">
+                    {/* Search Input */}
+                    <div className="relative w-[22%]">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-kram-400" />
+                      <Input
+                        type="text"
+                        placeholder="ค้นหา..."
+                        value={memberSearch}
+                        onChange={(e) => setMemberSearch(e.target.value)}
+                        className="pl-10 h-10"
+                      />
+                    </div>
                     <Button
                       onClick={() => {
                         setEditingMember(null);
@@ -1710,10 +1843,16 @@ export function SettingsClient({
                         <th className="text-left p-3 text-sm font-semibold text-kram-700">
                           <input
                             type="checkbox"
-                            checked={selectedMemberIds.length === members.length && members.length > 0}
+                            checked={
+                              selectedMemberIds.length ===
+                                filteredMembers.length &&
+                              filteredMembers.length > 0
+                            }
                             onChange={(e) => {
                               if (e.target.checked) {
-                                setSelectedMemberIds(members.map((m) => m.id));
+                                setSelectedMemberIds(
+                                  filteredMembers.map((m) => m.id)
+                                );
                               } else {
                                 setSelectedMemberIds([]);
                               }
@@ -1739,7 +1878,7 @@ export function SettingsClient({
                       </tr>
                     </thead>
                     <tbody>
-                      {members.map((member) => (
+                      {filteredMembers.map((member) => (
                         <tr
                           key={member.id}
                           className="border-b border-kram-50 hover:bg-kram-50/50 transition-colors"
@@ -1750,9 +1889,16 @@ export function SettingsClient({
                               checked={selectedMemberIds.includes(member.id)}
                               onChange={(e) => {
                                 if (e.target.checked) {
-                                  setSelectedMemberIds([...selectedMemberIds, member.id]);
+                                  setSelectedMemberIds([
+                                    ...selectedMemberIds,
+                                    member.id,
+                                  ]);
                                 } else {
-                                  setSelectedMemberIds(selectedMemberIds.filter((id) => id !== member.id));
+                                  setSelectedMemberIds(
+                                    selectedMemberIds.filter(
+                                      (id) => id !== member.id
+                                    )
+                                  );
                                 }
                               }}
                               className="rounded border-kram-300"
@@ -1768,14 +1914,22 @@ export function SettingsClient({
                           </td>
                           <td className="p-3">
                             <Badge
-                              variant={member.memberType === 99 ? "default" : "secondary"}
-                              className={member.memberType === 99 ? "bg-red-500" : ""}
+                              variant={
+                                member.memberType === 99
+                                  ? "default"
+                                  : "secondary"
+                              }
+                              className={
+                                member.memberType === 99 ? "bg-red-500" : ""
+                              }
                             >
                               {member.memberType === 99 ? "Admin" : "Hospital"}
                             </Badge>
                           </td>
                           <td className="p-3 text-sm text-kram-600">
-                            {new Date(member.createdAt).toLocaleDateString("th-TH")}
+                            {new Date(member.createdAt).toLocaleDateString(
+                              "th-TH"
+                            )}
                           </td>
                           <td className="p-3 text-right space-x-2">
                             <Button
@@ -1837,7 +1991,10 @@ export function SettingsClient({
                     <Input
                       value={siteConfigForm.logoUrl}
                       onChange={(e) =>
-                        setSiteConfigForm({ ...siteConfigForm, logoUrl: e.target.value })
+                        setSiteConfigForm({
+                          ...siteConfigForm,
+                          logoUrl: e.target.value,
+                        })
                       }
                       placeholder="https://example.com/logo.png"
                       className="rounded-xl border-kram-200 focus:border-indigo-400 focus:ring-indigo-400"
@@ -1848,7 +2005,10 @@ export function SettingsClient({
                     <Input
                       value={siteConfigForm.googleDriveUrl}
                       onChange={(e) =>
-                        setSiteConfigForm({ ...siteConfigForm, googleDriveUrl: e.target.value })
+                        setSiteConfigForm({
+                          ...siteConfigForm,
+                          googleDriveUrl: e.target.value,
+                        })
                       }
                       placeholder="https://drive.google.com/..."
                       className="rounded-xl border-kram-200 focus:border-indigo-400 focus:ring-indigo-400"
@@ -1904,11 +2064,16 @@ export function SettingsClient({
                     </h4>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label className="text-kram-600 text-sm">ชื่อบัญชี</Label>
+                        <Label className="text-kram-600 text-sm">
+                          ชื่อบัญชี
+                        </Label>
                         <Input
                           value={paymentForm.accountName}
                           onChange={(e) =>
-                            setPaymentForm({ ...paymentForm, accountName: e.target.value })
+                            setPaymentForm({
+                              ...paymentForm,
+                              accountName: e.target.value,
+                            })
                           }
                           placeholder="ชื่อบัญชี"
                           className="rounded-xl border-kram-200"
@@ -1919,30 +2084,43 @@ export function SettingsClient({
                         <Input
                           value={paymentForm.accountBank}
                           onChange={(e) =>
-                            setPaymentForm({ ...paymentForm, accountBank: e.target.value })
+                            setPaymentForm({
+                              ...paymentForm,
+                              accountBank: e.target.value,
+                            })
                           }
                           placeholder="ธนาคาร"
                           className="rounded-xl border-kram-200"
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label className="text-kram-600 text-sm">เลขที่บัญชี</Label>
+                        <Label className="text-kram-600 text-sm">
+                          เลขที่บัญชี
+                        </Label>
                         <Input
                           value={paymentForm.accountNo}
                           onChange={(e) =>
-                            setPaymentForm({ ...paymentForm, accountNo: e.target.value })
+                            setPaymentForm({
+                              ...paymentForm,
+                              accountNo: e.target.value,
+                            })
                           }
                           placeholder="เลขที่บัญชี"
                           className="rounded-xl border-kram-200"
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label className="text-kram-600 text-sm">ค่าลงทะเบียน (บาท)</Label>
+                        <Label className="text-kram-600 text-sm">
+                          ค่าลงทะเบียน (บาท)
+                        </Label>
                         <Input
                           type="number"
                           value={paymentForm.meetPrice}
                           onChange={(e) =>
-                            setPaymentForm({ ...paymentForm, meetPrice: e.target.value })
+                            setPaymentForm({
+                              ...paymentForm,
+                              meetPrice: e.target.value,
+                            })
                           }
                           placeholder="0.00"
                           className="rounded-xl border-kram-200"
@@ -1958,11 +2136,16 @@ export function SettingsClient({
                     </h4>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label className="text-amber-700 text-sm">ชื่อบัญชี</Label>
+                        <Label className="text-amber-700 text-sm">
+                          ชื่อบัญชี
+                        </Label>
                         <Input
                           value={paymentForm.accountFollowName}
                           onChange={(e) =>
-                            setPaymentForm({ ...paymentForm, accountFollowName: e.target.value })
+                            setPaymentForm({
+                              ...paymentForm,
+                              accountFollowName: e.target.value,
+                            })
                           }
                           placeholder="ชื่อบัญชี"
                           className="rounded-xl border-amber-200"
@@ -1973,30 +2156,43 @@ export function SettingsClient({
                         <Input
                           value={paymentForm.accountFollowBank}
                           onChange={(e) =>
-                            setPaymentForm({ ...paymentForm, accountFollowBank: e.target.value })
+                            setPaymentForm({
+                              ...paymentForm,
+                              accountFollowBank: e.target.value,
+                            })
                           }
                           placeholder="ธนาคาร"
                           className="rounded-xl border-amber-200"
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label className="text-amber-700 text-sm">เลขที่บัญชี</Label>
+                        <Label className="text-amber-700 text-sm">
+                          เลขที่บัญชี
+                        </Label>
                         <Input
                           value={paymentForm.accountFollowNo}
                           onChange={(e) =>
-                            setPaymentForm({ ...paymentForm, accountFollowNo: e.target.value })
+                            setPaymentForm({
+                              ...paymentForm,
+                              accountFollowNo: e.target.value,
+                            })
                           }
                           placeholder="เลขที่บัญชี"
                           className="rounded-xl border-amber-200"
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label className="text-amber-700 text-sm">ค่าลงทะเบียน (บาท)</Label>
+                        <Label className="text-amber-700 text-sm">
+                          ค่าลงทะเบียน (บาท)
+                        </Label>
                         <Input
                           type="number"
                           value={paymentForm.meetPriceFollow}
                           onChange={(e) =>
-                            setPaymentForm({ ...paymentForm, meetPriceFollow: e.target.value })
+                            setPaymentForm({
+                              ...paymentForm,
+                              meetPriceFollow: e.target.value,
+                            })
                           }
                           placeholder="0.00"
                           className="rounded-xl border-amber-200"
@@ -2006,11 +2202,16 @@ export function SettingsClient({
                   </div>
 
                   <div className="space-y-2">
-                    <Label className="text-kram-700">เงื่อนไขการชำระเงิน 1</Label>
+                    <Label className="text-kram-700">
+                      เงื่อนไขการชำระเงิน 1
+                    </Label>
                     <Textarea
                       value={paymentForm.condition1}
                       onChange={(e) =>
-                        setPaymentForm({ ...paymentForm, condition1: e.target.value })
+                        setPaymentForm({
+                          ...paymentForm,
+                          condition1: e.target.value,
+                        })
                       }
                       placeholder="เงื่อนไขการชำระเงิน"
                       rows={3}
@@ -2019,11 +2220,16 @@ export function SettingsClient({
                   </div>
 
                   <div className="space-y-2">
-                    <Label className="text-kram-700">เงื่อนไขการชำระเงิน 2</Label>
+                    <Label className="text-kram-700">
+                      เงื่อนไขการชำระเงิน 2
+                    </Label>
                     <Textarea
                       value={paymentForm.condition2}
                       onChange={(e) =>
-                        setPaymentForm({ ...paymentForm, condition2: e.target.value })
+                        setPaymentForm({
+                          ...paymentForm,
+                          condition2: e.target.value,
+                        })
                       }
                       placeholder="เงื่อนไขเพิ่มเติม"
                       rows={3}
@@ -2239,7 +2445,9 @@ function NewsFormDialog({
           <div className="flex items-center gap-3">
             <Switch
               checked={form.isPublished}
-              onCheckedChange={(checked) => setForm({ ...form, isPublished: checked })}
+              onCheckedChange={(checked) =>
+                setForm({ ...form, isPublished: checked })
+              }
             />
             <Label>เผยแพร่</Label>
           </div>
@@ -2319,7 +2527,9 @@ function ScheduleFormDialog({
               <Input
                 type="number"
                 value={form.dayNumber}
-                onChange={(e) => setForm({ ...form, dayNumber: parseInt(e.target.value) })}
+                onChange={(e) =>
+                  setForm({ ...form, dayNumber: parseInt(e.target.value) })
+                }
                 min={1}
                 required
               />
@@ -2339,7 +2549,9 @@ function ScheduleFormDialog({
               <Label>เวลาเริ่ม *</Label>
               <Input
                 value={form.startTime}
-                onChange={(e) => setForm({ ...form, startTime: e.target.value })}
+                onChange={(e) =>
+                  setForm({ ...form, startTime: e.target.value })
+                }
                 placeholder="08:00"
                 required
               />
@@ -2367,7 +2579,9 @@ function ScheduleFormDialog({
             <Label>รายละเอียด</Label>
             <Textarea
               value={form.description}
-              onChange={(e) => setForm({ ...form, description: e.target.value })}
+              onChange={(e) =>
+                setForm({ ...form, description: e.target.value })
+              }
               placeholder="รายละเอียดเพิ่มเติม"
               rows={2}
             />
@@ -2547,7 +2761,9 @@ function HospitalFormDialog({
               <Label>ประเภท</Label>
               <select
                 value={form.hospitalType}
-                onChange={(e) => setForm({ ...form, hospitalType: e.target.value })}
+                onChange={(e) =>
+                  setForm({ ...form, hospitalType: e.target.value })
+                }
                 className="w-full h-10 px-3 rounded-lg border border-kram-200 bg-white text-sm"
               >
                 <option value="">-- เลือก --</option>
@@ -2897,7 +3113,11 @@ function MemberFormDialog({
               type="password"
               value={form.password}
               onChange={(e) => setForm({ ...form, password: e.target.value })}
-              placeholder={member ? "ไม่ต้องกรอกหากไม่เปลี่ยน" : "รหัสผ่าน (อย่างน้อย 6 ตัวอักษร)"}
+              placeholder={
+                member
+                  ? "ไม่ต้องกรอกหากไม่เปลี่ยน"
+                  : "รหัสผ่าน (อย่างน้อย 6 ตัวอักษร)"
+              }
               required={!member}
               minLength={6}
             />
@@ -2920,7 +3140,9 @@ function MemberFormDialog({
             <Label>โรงพยาบาล *</Label>
             <select
               value={form.hospitalCode}
-              onChange={(e) => setForm({ ...form, hospitalCode: e.target.value })}
+              onChange={(e) =>
+                setForm({ ...form, hospitalCode: e.target.value })
+              }
               className="w-full p-2 border border-kram-200 rounded-lg"
               required={form.memberType === "1"}
             >
@@ -3206,4 +3428,3 @@ function CSVImportDialog({
     </Dialog>
   );
 }
-
