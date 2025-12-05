@@ -282,7 +282,7 @@ export function AttendeeSearch({ zones = [], hospitals = [], isAdmin = false }: 
                 role="combobox"
                 aria-expanded={zoneOpen}
                 className={cn(
-                  "w-[160px] justify-between rounded-xl border-kram-200 hover:border-cyan-300 hover:bg-cyan-50/50",
+                  "w-[160px] justify-between rounded-xl border-kram-200 font-normal h-10",
                   zoneFromUrl !== "all" && "border-cyan-400 bg-cyan-50"
                 )}
               >
@@ -290,11 +290,11 @@ export function AttendeeSearch({ zones = [], hospitals = [], isAdmin = false }: 
                 <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-[200px] p-0" align="start">
+            <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
               <Command>
                 <CommandInput placeholder="ค้นหาเขตสุขภาพ..." />
                 <CommandList>
-                  <CommandEmpty>ไม่พบข้อมูล</CommandEmpty>
+                  <CommandEmpty>ไม่พบเขตสุขภาพที่ค้นหา</CommandEmpty>
                   <CommandGroup>
                     <CommandItem
                       value="all"
@@ -339,7 +339,7 @@ export function AttendeeSearch({ zones = [], hospitals = [], isAdmin = false }: 
                 role="combobox"
                 aria-expanded={provinceOpen}
                 className={cn(
-                  "w-[140px] justify-between rounded-xl border-kram-200 hover:border-cyan-300 hover:bg-cyan-50/50",
+                  "w-[140px] justify-between rounded-xl border-kram-200 font-normal h-10",
                   provinceFromUrl !== "all" && "border-cyan-400 bg-cyan-50"
                 )}
               >
@@ -347,11 +347,11 @@ export function AttendeeSearch({ zones = [], hospitals = [], isAdmin = false }: 
                 <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-[200px] p-0" align="start">
+            <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
               <Command>
                 <CommandInput placeholder="ค้นหาจังหวัด..." />
                 <CommandList>
-                  <CommandEmpty>ไม่พบข้อมูล</CommandEmpty>
+                  <CommandEmpty>ไม่พบจังหวัดที่ค้นหา</CommandEmpty>
                   <CommandGroup>
                     <CommandItem
                       value="all"
@@ -396,7 +396,7 @@ export function AttendeeSearch({ zones = [], hospitals = [], isAdmin = false }: 
                 role="combobox"
                 aria-expanded={hospitalOpen}
                 className={cn(
-                  "w-[180px] justify-between rounded-xl border-kram-200 hover:border-cyan-300 hover:bg-cyan-50/50",
+                  "w-[200px] justify-between rounded-xl border-kram-200 font-normal h-10",
                   hospitalFromUrl !== "all" && "border-cyan-400 bg-cyan-50"
                 )}
               >
@@ -404,11 +404,11 @@ export function AttendeeSearch({ zones = [], hospitals = [], isAdmin = false }: 
                 <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-[300px] p-0" align="start">
+            <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
               <Command>
                 <CommandInput placeholder="ค้นหาโรงพยาบาล..." />
                 <CommandList>
-                  <CommandEmpty>ไม่พบข้อมูล</CommandEmpty>
+                  <CommandEmpty>ไม่พบโรงพยาบาลที่ค้นหา</CommandEmpty>
                   <CommandGroup>
                     <CommandItem
                       value="all"
@@ -452,7 +452,7 @@ export function AttendeeSearch({ zones = [], hospitals = [], isAdmin = false }: 
               role="combobox"
               aria-expanded={statusOpen}
               className={cn(
-                "w-[150px] justify-between rounded-xl border-kram-200 hover:border-cyan-300 hover:bg-cyan-50/50",
+                "w-[160px] justify-between rounded-xl border-kram-200 font-normal h-10",
                 statusFromUrl !== "all" && "border-cyan-400 bg-cyan-50"
               )}
             >
@@ -460,7 +460,7 @@ export function AttendeeSearch({ zones = [], hospitals = [], isAdmin = false }: 
               <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-[180px] p-0" align="start">
+          <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
             <Command>
               <CommandList>
                 <CommandGroup>

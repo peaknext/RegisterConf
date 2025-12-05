@@ -11,9 +11,21 @@ const sarabun = Sarabun({
 });
 
 export const metadata: Metadata = {
-  title: "ระบบลงทะเบียนงานประชุมวิชาการ | สำนักงานสาธารณสุขจังหวัดสกลนคร",
-  description: "ระบบลงทะเบียนงานประชุมวิชาการประจำปี 2568 สำนักงานสาธารณสุขจังหวัดสกลนคร",
+  title:
+    "ระบบลงทะเบียนงานประชุมวิชาการ ชมรมโรงพยาบาลศูนย์/โรงพยาบาลทั่วไป ประจำปี 2569",
+  description:
+    "ระบบลงทะเบียนงานประชุมวิชาการ ชมรมโรงพยาบาลศูนย์/โรงพยาบาลทั่วไป ประจำปี 2569",
   keywords: ["งานประชุมวิชาการ", "สาธารณสุข", "สกลนคร", "ลงทะเบียน"],
+  icons: {
+    icon: [
+      { url: "/icon-32.png", sizes: "32x32", type: "image/png" },
+      { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+    ],
+    apple: [
+      { url: "/icon-192.png", sizes: "180x180", type: "image/png" },
+    ],
+  },
+  manifest: "/manifest.json",
 };
 
 export default function RootLayout({

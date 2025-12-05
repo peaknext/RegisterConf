@@ -439,7 +439,7 @@ export default function LoginPage() {
             <p className="text-sm text-kram-400">
               ต้องการความช่วยเหลือ?{" "}
               <a
-                href="mailto:saraban_skonpho@moph.go.th"
+                href="mailto:ict-sknhos@moph.go.th"
                 className="text-cyan-600 hover:text-cyan-700 hover:underline transition-colors"
               >
                 ติดต่อเรา

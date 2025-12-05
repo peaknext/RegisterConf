@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { AttendeeSearch } from "@/components/portal/AttendeeSearch";
 import { AttendeePagination } from "@/components/portal/AttendeePagination";
+import { RegistrationActions } from "@/components/portal/RegistrationActions";
 
 // Status configuration with KramSakon theme colors
 const statusMap: Record<
@@ -279,12 +280,15 @@ export default async function RegistrationPage({
             รายการผู้ลงทะเบียนทั้งหมดของโรงพยาบาล
           </p>
         </div>
-        <Link href="/portal/register">
-          <Button className="bg-gradient-to-r from-kram-600 to-cyan-600 hover:from-kram-700 hover:to-cyan-700 text-white shadow-lg shadow-kram-500/20 hover:shadow-xl hover:shadow-kram-500/30 transition-all duration-300 hover:-translate-y-0.5">
-            <Plus className="w-4 h-4 mr-2" />
-            เพิ่มผู้ลงทะเบียน
-          </Button>
-        </Link>
+        <div className="flex flex-wrap items-center gap-3">
+          <RegistrationActions />
+          <Link href="/portal/register">
+            <Button className="bg-gradient-to-r from-kram-600 to-cyan-600 hover:from-kram-700 hover:to-cyan-700 text-white shadow-lg shadow-kram-500/20 hover:shadow-xl hover:shadow-kram-500/30 transition-all duration-300 hover:-translate-y-0.5">
+              <Plus className="w-4 h-4 mr-2" />
+              เพิ่มผู้ลงทะเบียน
+            </Button>
+          </Link>
+        </div>
       </div>
 
       {/* Search and Filters */}

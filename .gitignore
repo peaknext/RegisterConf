@@ -46,3 +46,4 @@ public/uploads/
 
 # Database dumps
 vachira_register.sql
+logs/

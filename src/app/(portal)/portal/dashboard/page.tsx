@@ -181,7 +181,9 @@ export default async function DashboardPage() {
           </h1>
           <p className="text-kram-500 mt-2 flex items-center gap-2">
             <span className="w-1.5 h-1.5 rounded-full bg-cyan-500 animate-pulse" />
-            {isAdmin ? "ภาพรวมการลงทะเบียนของโรงพยาบาล" : "ระบบลงทะเบียนงานประชุมวิชาการ"}
+            {isAdmin
+              ? "ภาพรวมการลงทะเบียนของโรงพยาบาล"
+              : "ระบบลงทะเบียนงานประชุมวิชาการ"}
           </p>
         </div>
         {/* Event badge with floating effect */}
@@ -190,8 +192,12 @@ export default async function DashboardPage() {
             <Zap className="w-5 h-5 text-white" />
           </div>
           <div>
-            <span className="text-xs text-kram-500 font-medium">Conference</span>
-            <p className="text-sm font-bold text-kram-800">งานประชุมวิชาการ 2569</p>
+            <span className="text-xs text-kram-500 font-medium">
+              Conference
+            </span>
+            <p className="text-sm font-bold text-kram-800">
+              งานประชุมวิชาการ 2569
+            </p>
           </div>
         </div>
       </div>
@@ -212,13 +218,17 @@ export default async function DashboardPage() {
                   className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${stat.accentLine} opacity-80 group-hover:opacity-100 transition-opacity`}
                 />
                 {/* Subtle corner glow on hover */}
-                <div className={`absolute -top-10 -right-10 w-32 h-32 bg-gradient-to-br ${stat.gradient} opacity-0 group-hover:opacity-10 rounded-full blur-2xl transition-opacity duration-500`} />
+                <div
+                  className={`absolute -top-10 -right-10 w-32 h-32 bg-gradient-to-br ${stat.gradient} opacity-0 group-hover:opacity-10 rounded-full blur-2xl transition-opacity duration-500`}
+                />
 
                 <CardHeader className="flex flex-row items-center justify-between pb-2 pt-5">
                   <CardTitle className="text-sm font-medium text-kram-600">
                     {stat.label}
                   </CardTitle>
-                  <div className={`w-11 h-11 rounded-xl ${stat.iconBg} flex items-center justify-center shadow-sm group-hover:shadow-md group-hover:scale-110 transition-all duration-300`}>
+                  <div
+                    className={`w-11 h-11 rounded-xl ${stat.iconBg} flex items-center justify-center shadow-sm group-hover:shadow-md group-hover:scale-110 transition-all duration-300`}
+                  >
                     <Icon className={`w-5 h-5 ${stat.iconColor}`} />
                   </div>
                 </CardHeader>
@@ -227,13 +237,15 @@ export default async function DashboardPage() {
                     <span className="text-4xl font-bold bg-gradient-to-br from-kram-800 to-kram-900 bg-clip-text text-transparent">
                       {value}
                     </span>
-                    <span className="text-sm text-kram-400 font-medium">{stat.unit}</span>
+                    <span className="text-sm text-kram-400 font-medium">
+                      {stat.unit}
+                    </span>
                   </div>
                   {/* Micro progress indicator */}
                   <div className="mt-3 h-1 w-full bg-kram-100 rounded-full overflow-hidden">
                     <div
                       className={`h-full bg-gradient-to-r ${stat.accentLine} rounded-full transition-all duration-1000`}
-                      style={{ width: value > 0 ? '100%' : '0%' }}
+                      style={{ width: value > 0 ? "100%" : "0%" }}
                     />
                   </div>
                 </CardContent>
@@ -256,7 +268,9 @@ export default async function DashboardPage() {
                   {isAdmin ? "การดำเนินการด่วน" : "เมนูหลัก"}
                 </CardTitle>
                 <p className="text-sm text-kram-500 mt-0.5">
-                  {isAdmin ? "เข้าถึงฟังก์ชันหลักได้อย่างรวดเร็ว" : "เลือกเมนูที่ต้องการใช้งาน"}
+                  {isAdmin
+                    ? "เข้าถึงฟังก์ชันหลักได้อย่างรวดเร็ว"
+                    : "เลือกเมนูที่ต้องการใช้งาน"}
                 </p>
               </div>
             </div>
@@ -273,7 +287,9 @@ export default async function DashboardPage() {
                   className={`group relative p-6 rounded-2xl bg-gradient-to-br from-white via-white to-kram-50/30 border border-kram-100/80 hover:border-cyan-300/60 transition-all duration-300 hover:shadow-xl hover:shadow-cyan-500/10 hover:-translate-y-1 overflow-hidden ${staggerDelay[index]}`}
                 >
                   {/* Background glow on hover */}
-                  <div className={`absolute -bottom-20 -right-20 w-40 h-40 bg-gradient-to-br ${action.gradient} opacity-0 group-hover:opacity-10 rounded-full blur-3xl transition-all duration-500`} />
+                  <div
+                    className={`absolute -bottom-20 -right-20 w-40 h-40 bg-gradient-to-br ${action.gradient} opacity-0 group-hover:opacity-10 rounded-full blur-3xl transition-all duration-500`}
+                  />
 
                   {/* Icon with gradient background and glow */}
                   <div
@@ -281,7 +297,9 @@ export default async function DashboardPage() {
                   >
                     <Icon className="w-7 h-7 text-white" />
                     {/* Subtle ring effect */}
-                    <div className={`absolute inset-0 rounded-2xl bg-gradient-to-br ${action.gradient} opacity-0 group-hover:opacity-30 blur-md -z-10 scale-150 transition-opacity duration-300`} />
+                    <div
+                      className={`absolute inset-0 rounded-2xl bg-gradient-to-br ${action.gradient} opacity-0 group-hover:opacity-30 blur-md -z-10 scale-150 transition-opacity duration-300`}
+                    />
                   </div>
 
                   <h3 className="font-bold text-kram-900 mb-1.5 group-hover:text-kram-700 transition-colors text-lg">
@@ -297,7 +315,9 @@ export default async function DashboardPage() {
                   </div>
 
                   {/* Bottom accent line */}
-                  <div className={`absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r ${action.gradient} opacity-0 group-hover:opacity-60 transition-opacity duration-300`} />
+                  <div
+                    className={`absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r ${action.gradient} opacity-0 group-hover:opacity-60 transition-opacity duration-300`}
+                  />
                 </Link>
               );
             })}
@@ -328,9 +348,11 @@ export default async function DashboardPage() {
                 </h3>
                 <p className="text-kram-200 text-sm leading-relaxed">
                   ติดต่อทีมงานได้ที่{" "}
-                  <span className="text-cyan-300 font-medium">saraban_skonpho@moph.go.th</span>
-                  {" "}หรือ{" "}
-                  <span className="text-cyan-300 font-medium">042-711157</span>
+                  <span className="text-cyan-300 font-medium">
+                    ict-sknhos@moph.go.th
+                  </span>{" "}
+                  หรือ{" "}
+                  <span className="text-cyan-300 font-medium">042-176000</span>
                 </p>
               </div>
             </div>

@@ -51,7 +51,7 @@ export function Footer({ footerInfo }: FooterProps) {
               <div className="w-14 h-14 rounded-full bg-white flex items-center justify-center shadow-lg">
                 <Image
                   src="/snlogo.png"
-                  alt="สำนักงานสาธารณสุขจังหวัดสกลนคร"
+                  alt="โรงพยาบาลสกลนคร"
                   width={44}
                   height={44}
                   className="w-11 h-11 object-contain"
@@ -74,11 +74,33 @@ export function Footer({ footerInfo }: FooterProps) {
             </p>
             <div className="flex gap-4">
               <a
-                href="#"
-                className="w-10 h-10 rounded-full bg-kram-800 hover:bg-kram-700 flex items-center justify-center transition-colors"
+                href="https://sknhospital.moph.go.th/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-10 h-10 rounded-full bg-kram-800 hover:bg-cyan-600 flex items-center justify-center transition-colors"
                 aria-label="Website"
               >
                 <Globe className="w-5 h-5" />
+              </a>
+              <a
+                href="https://www.facebook.com/skn.hospital/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-10 h-10 rounded-full bg-kram-800 hover:bg-blue-600 flex items-center justify-center transition-colors"
+                aria-label="Facebook"
+              >
+                <svg
+                  className="w-5 h-5"
+                  fill="currentColor"
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z"
+                    clipRule="evenodd"
+                  />
+                </svg>
               </a>
             </div>
           </div>
@@ -137,7 +159,7 @@ export function Footer({ footerInfo }: FooterProps) {
                   href={`tel:${footerInfo?.phone || "042-176000"}`}
                   className="text-kram-300 hover:text-white transition-colors text-sm"
                 >
-                  {footerInfo?.phone || "042-711157"}
+                  {footerInfo?.phone || "042-176000"}
                 </a>
               </li>
               <li className="flex items-center gap-3">
@@ -146,11 +168,11 @@ export function Footer({ footerInfo }: FooterProps) {
                 </div>
                 <a
                   href={`mailto:${
-                    footerInfo?.email || "saraban_skonpho@moph.go.th"
+                    footerInfo?.email || "ict-sknhos@moph.go.th"
                   }`}
                   className="text-kram-300 hover:text-white transition-colors text-sm"
                 >
-                  {footerInfo?.email || "saraban_skonpho@moph.go.th"}
+                  {footerInfo?.email || "ict-sknhos@moph.go.th"}
                 </a>
               </li>
             </ul>

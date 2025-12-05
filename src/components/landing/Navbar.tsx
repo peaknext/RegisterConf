@@ -78,7 +78,7 @@ export function Navbar() {
               >
                 <Image
                   src="/snlogo.png"
-                  alt="สำนักงานสาธารณสุขจังหวัดสกลนคร"
+                  alt="โรงพยาบาลจังหวัดสกลนคร"
                   width={40}
                   height={40}
                   className="w-9 h-9 object-contain"

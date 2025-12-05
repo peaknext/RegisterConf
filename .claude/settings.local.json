@@ -7,7 +7,10 @@
       "Bash(docker-compose build:*)",
       "Bash(docker-compose up:*)",
       "Bash(git add:*)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(git push:*)",
+      "Bash(pm2 delete:*)",
+      "Bash(cat:*)"
     ],
     "deny": [],
     "ask": []
