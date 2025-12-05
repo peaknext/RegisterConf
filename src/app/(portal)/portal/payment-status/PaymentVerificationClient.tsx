@@ -7,6 +7,7 @@ import Image from "next/image";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { getPaymentImageUrl } from "@/lib/utils";
 import {
   Dialog,
   DialogContent,
@@ -568,7 +569,7 @@ export default function PaymentVerificationClient({
               {selectedFinance?.fileName ? (
                 <div className="flex justify-center">
                   <Image
-                    src={selectedFinance.fileName}
+                    src={getPaymentImageUrl(selectedFinance.fileName) || ""}
                     alt="หลักฐานการชำระเงิน"
                     width={400}
                     height={1200}

@@ -46,7 +46,7 @@ export async function POST(request: Request) {
       data: {
         memberId: parseInt(memberId),
         attendeeIds: attendeeIds,
-        fileName: `/uploads/payments/${fileName}`,
+        fileName: `/api/uploads/payments/${fileName}`,
         status: 1, // รอตรวจสอบ
         paidDate: paidDate,
       },

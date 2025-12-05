@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { FileText, Clock, CheckCircle, XCircle, ExternalLink } from "lucide-react";
 import { PaymentApprovalButtons } from "@/components/admin/PaymentApprovalButtons";
+import { getPaymentImageUrl } from "@/lib/utils";
 
 const statusMap: Record<number, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
   1: { label: "รอตรวจสอบ", variant: "outline" },
@@ -99,7 +100,7 @@ export default async function PaymentsPage() {
                         </p>
                         {payment.fileName && (
                           <a
-                            href={payment.fileName}
+                            href={getPaymentImageUrl(payment.fileName) || "#"}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="inline-flex items-center gap-1 text-sm text-primary hover:underline mt-2"
