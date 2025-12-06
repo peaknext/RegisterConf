@@ -1,12 +1,8 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
-import { createHash } from "crypto";
-
-// MD5 hash function (same as auth.ts)
-function md5(str: string): string {
-  return createHash("md5").update(str).digest("hex");
-}
+import { hashPassword, validatePasswordMinLength } from "@/lib/password";
+import { csrfProtection } from "@/lib/csrf";
 
 // PATCH change single member password
 export async function PATCH(
@@ -14,6 +10,10 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // CSRF protection
+    const csrfError = csrfProtection(request);
+    if (csrfError) return csrfError;
+
     const session = await auth();
     if (!session || session.user.memberType !== 99) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -24,15 +24,13 @@ export async function PATCH(
     const body = await request.json();
 
     // Validate new password
-    if (!body.newPassword || body.newPassword.length < 6) {
-      return NextResponse.json(
-        { error: "Password must be at least 6 characters" },
-        { status: 400 }
-      );
+    const passwordError = validatePasswordMinLength(body.newPassword, 6);
+    if (passwordError) {
+      return NextResponse.json({ error: passwordError }, { status: 400 });
     }
 
-    // Hash password with MD5
-    const hashedPassword = md5(body.newPassword);
+    // Hash password with bcrypt
+    const hashedPassword = await hashPassword(body.newPassword);
 
     await prisma.member.update({
       where: { id: memberId },

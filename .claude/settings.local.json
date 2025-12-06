@@ -14,7 +14,8 @@
       "Bash(npx shadcn@latest add tabs:*)",
       "Bash(npm audit:*)",
       "Bash(node:*)",
-      "Bash(\"a:\\RegisterConf\\src\\app\\(portal)\\portal\\settings\\SettingsClient.tsx\")"
+      "Bash(\"a:\\RegisterConf\\src\\app\\(portal)\\portal\\settings\\SettingsClient.tsx\")",
+      "Bash(npm install:*)"
     ],
     "deny": [],
     "ask": []

@@ -1,6 +1,7 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
+import { csrfProtection } from "@/lib/csrf";
 
 // Helper function to combine date and time strings into a valid Date object
 function combineDateAndTime(
@@ -36,6 +37,10 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // CSRF protection
+    const csrfError = csrfProtection(request);
+    if (csrfError) return csrfError;
+
     const session = await auth();
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -137,6 +142,10 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // CSRF protection
+    const csrfError = csrfProtection(request);
+    if (csrfError) return csrfError;
+
     const session = await auth();
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -146,12 +155,12 @@ export async function PATCH(
     const attendeeId = parseInt(id);
     const body = await request.json();
 
-    // Verify attendee belongs to user's hospital
+    // Admin can update any attendee, regular users only their hospital's
+    const isAdmin = session.user.memberType === 99;
     const existingAttendee = await prisma.attendee.findFirst({
-      where: {
-        id: attendeeId,
-        hospitalCode: session.user.hospitalCode,
-      },
+      where: isAdmin
+        ? { id: attendeeId }
+        : { id: attendeeId, hospitalCode: session.user.hospitalCode },
     });
 
     if (!existingAttendee) {
@@ -199,11 +208,12 @@ export async function GET(
     const { id } = await params;
     const attendeeId = parseInt(id);
 
+    // Admin can view any attendee, regular users only their hospital's
+    const isAdmin = session.user.memberType === 99;
     const attendee = await prisma.attendee.findFirst({
-      where: {
-        id: attendeeId,
-        hospitalCode: session.user.hospitalCode,
-      },
+      where: isAdmin
+        ? { id: attendeeId }
+        : { id: attendeeId, hospitalCode: session.user.hospitalCode },
       include: {
         regType: true,
         position: true,

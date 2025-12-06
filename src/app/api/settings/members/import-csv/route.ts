@@ -1,12 +1,8 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
-import { createHash } from "crypto";
-
-// MD5 hash function (same as auth.ts)
-function md5(str: string): string {
-  return createHash("md5").update(str).digest("hex");
-}
+import { hashPassword } from "@/lib/password";
+import { csrfProtection } from "@/lib/csrf";
 
 // Email validation helper
 function isValidEmail(email: string): boolean {
@@ -24,6 +20,10 @@ interface ImportResult {
 // POST bulk import members from CSV
 export async function POST(request: Request) {
   try {
+    // CSRF protection
+    const csrfError = csrfProtection(request);
+    if (csrfError) return csrfError;
+
     const session = await auth();
     if (!session || session.user.memberType !== 99) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -221,7 +221,7 @@ export async function POST(request: Request) {
 
       // All validations passed - create member
       try {
-        const hashedPassword = md5(password);
+        const hashedPassword = await hashPassword(password);
 
         await prisma.member.create({
           data: {
