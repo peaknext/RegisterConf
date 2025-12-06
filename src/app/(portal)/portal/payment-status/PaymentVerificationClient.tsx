@@ -541,24 +541,24 @@ export default function PaymentVerificationClient({
 
       {/* Verification Modal */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden p-0 border-0 shadow-2xl">
-          <DialogHeader className="px-6 py-4 border-b bg-gradient-to-r from-kram-50 to-cyan-50">
-            <DialogTitle className="text-xl font-bold text-kram-900 flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-kram-100 to-cyan-100 flex items-center justify-center">
-                <FileText className="w-5 h-5 text-kram-600" />
+        <DialogContent className="max-w-4xl w-[95vw] max-h-[95vh] sm:max-h-[90vh] overflow-hidden p-0 border-0 shadow-2xl flex flex-col">
+          <DialogHeader className="flex-shrink-0 px-4 sm:px-6 py-3 sm:py-4 border-b bg-gradient-to-r from-kram-50 to-cyan-50">
+            <DialogTitle className="text-lg sm:text-xl font-bold text-kram-900 flex items-center gap-2 sm:gap-3">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-kram-100 to-cyan-100 flex items-center justify-center">
+                <FileText className="w-4 h-4 sm:w-5 sm:h-5 text-kram-600" />
               </div>
               ตรวจสอบหลักฐานการชำระเงิน
             </DialogTitle>
-            <DialogDescription className="text-kram-500 ml-13">
+            <DialogDescription className="text-kram-500 ml-10 sm:ml-13 text-sm">
               รายการ #{selectedFinance?.id} • {formatDate(selectedFinance?.createdAt || null)}
             </DialogDescription>
           </DialogHeader>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-0 max-h-[60vh] overflow-hidden">
+          <div className="flex flex-col md:flex-row flex-1 min-h-0 overflow-hidden">
             {/* Left Column - Slip Image with drag-to-scroll */}
             <div
               ref={imageContainerRef}
-              className={`bg-gradient-to-br from-kram-900 to-kram-950 p-4 min-h-[400px] max-h-[60vh] overflow-y-auto overflow-x-hidden relative select-none ${
+              className={`bg-gradient-to-br from-kram-900 to-kram-950 p-3 sm:p-4 min-h-[200px] sm:min-h-[300px] h-[35vh] md:h-auto md:flex-1 md:w-1/2 overflow-y-auto overflow-x-hidden scrollbar-auto-hide relative select-none ${
                 isDragging ? "cursor-grabbing" : "cursor-grab"
               }`}
               onMouseDown={handleMouseDown}
@@ -579,99 +579,106 @@ export default function PaymentVerificationClient({
                   />
                 </div>
               ) : (
-                <div className="text-center text-kram-400 flex flex-col items-center justify-center min-h-[300px]">
-                  <FileText className="w-16 h-16 mx-auto mb-4 opacity-50" />
+                <div className="text-center text-kram-400 flex flex-col items-center justify-center min-h-[200px] sm:min-h-[300px]">
+                  <FileText className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-4 opacity-50" />
                   <p>ไม่พบไฟล์หลักฐาน</p>
                 </div>
               )}
             </div>
 
             {/* Right Column - Attendee List */}
-            <div className="bg-white p-6 overflow-auto max-h-[60vh]">
-              <div className="mb-4">
-                <h3 className="font-bold text-kram-900 flex items-center gap-2">
-                  <Users className="w-5 h-5 text-kram-600" />
+            <div className="bg-white flex flex-col h-[40vh] md:h-auto md:flex-1 md:w-1/2">
+              {/* Fixed Header */}
+              <div className="flex-shrink-0 px-4 sm:px-6 pt-4 sm:pt-6 pb-3 border-b border-kram-100">
+                <h3 className="font-bold text-kram-900 flex items-center gap-2 text-sm sm:text-base">
+                  <Users className="w-4 h-4 sm:w-5 sm:h-5 text-kram-600" />
                   รายชื่อผู้ลงทะเบียน
-                  <Badge variant="secondary" className="ml-auto bg-kram-100 text-kram-700">
+                  <Badge variant="secondary" className="ml-auto bg-kram-100 text-kram-700 text-xs sm:text-sm">
                     {selectedFinance?.attendeeCount || 0} คน
                   </Badge>
                 </h3>
-                <p className="text-sm text-kram-500 mt-1">
+                <p className="text-xs sm:text-sm text-kram-500 mt-1">
                   {selectedFinance?.hospitalName}
                 </p>
               </div>
 
-              <div className="space-y-3">
-                {selectedFinance?.attendees.map((attendee, index) => {
-                  const price =
-                    attendee.regTypeId === 6 ? meetPriceFollow : meetPrice;
-                  return (
-                    <div
-                      key={attendee.id}
-                      className="p-4 bg-gradient-to-r from-kram-50/50 to-cyan-50/30 rounded-xl border border-kram-100 hover:border-cyan-200 transition-colors"
-                    >
-                      <div className="flex items-start justify-between">
-                        <div className="flex items-start gap-3">
-                          <div className="w-8 h-8 bg-gradient-to-br from-kram-500 to-cyan-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
-                            {index + 1}
+              {/* Scrollable Attendee List */}
+              <div className="flex-1 overflow-y-auto scrollbar-auto-hide px-4 sm:px-6 py-3">
+                <div className="space-y-2 sm:space-y-3">
+                  {selectedFinance?.attendees.map((attendee, index) => {
+                    const price =
+                      attendee.regTypeId === 6 ? meetPriceFollow : meetPrice;
+                    return (
+                      <div
+                        key={attendee.id}
+                        className="p-3 sm:p-4 bg-gradient-to-r from-kram-50/50 to-cyan-50/30 rounded-xl border border-kram-100 hover:border-cyan-200 transition-colors"
+                      >
+                        <div className="flex items-start justify-between">
+                          <div className="flex items-start gap-2 sm:gap-3">
+                            <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gradient-to-br from-kram-500 to-cyan-500 rounded-full flex items-center justify-center text-white font-bold text-xs sm:text-sm">
+                              {index + 1}
+                            </div>
+                            <div>
+                              <p className="font-semibold text-kram-900 text-sm sm:text-base">
+                                {attendee.prefix}
+                                {attendee.firstName} {attendee.lastName}
+                              </p>
+                              <p className="text-xs sm:text-sm text-kram-500">
+                                {attendee.hospital?.name || "-"}
+                              </p>
+                            </div>
                           </div>
-                          <div>
-                            <p className="font-semibold text-kram-900">
-                              {attendee.prefix}
-                              {attendee.firstName} {attendee.lastName}
+                          <div className="text-right">
+                            <p className="font-bold bg-gradient-to-r from-kram-600 to-cyan-600 bg-clip-text text-transparent text-sm sm:text-base">
+                              {price.toLocaleString("th-TH")}
                             </p>
-                            <p className="text-sm text-kram-500">
-                              {attendee.hospital?.name || "-"}
-                            </p>
+                            <p className="text-xs text-kram-400">บาท</p>
                           </div>
-                        </div>
-                        <div className="text-right">
-                          <p className="font-bold bg-gradient-to-r from-kram-600 to-cyan-600 bg-clip-text text-transparent">
-                            {price.toLocaleString("th-TH")}
-                          </p>
-                          <p className="text-xs text-kram-400">บาท</p>
                         </div>
                       </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Fixed Total Summary */}
+              <div className="flex-shrink-0 px-4 sm:px-6 pb-4 sm:pb-6 pt-3 border-t border-kram-100 space-y-3">
+                {/* Total Amount */}
+                <div className="p-3 sm:p-4 bg-gradient-to-r from-kram-600 via-kram-700 to-cyan-600 rounded-xl text-white relative overflow-hidden">
+                  <div className="absolute top-0 right-0 w-24 sm:w-32 h-24 sm:h-32 bg-white/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/4" />
+                  <div className="relative flex items-center justify-between">
+                    <span className="font-medium text-sm sm:text-base">ยอดรวมทั้งสิ้น</span>
+                    <div className="text-right">
+                      <span className="text-2xl sm:text-3xl font-bold">
+                        {(selectedFinance?.amount || 0).toLocaleString("th-TH")}
+                      </span>
+                      <span className="text-cyan-200 ml-1 sm:ml-2 text-sm sm:text-base">บาท</span>
                     </div>
-                  );
-                })}
-              </div>
-
-              {/* Total Amount */}
-              <div className="mt-6 p-4 bg-gradient-to-r from-kram-600 via-kram-700 to-cyan-600 rounded-xl text-white relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/4" />
-                <div className="relative flex items-center justify-between">
-                  <span className="font-medium">ยอดรวมทั้งสิ้น</span>
-                  <div className="text-right">
-                    <span className="text-3xl font-bold">
-                      {(selectedFinance?.amount || 0).toLocaleString("th-TH")}
-                    </span>
-                    <span className="text-cyan-200 ml-2">บาท</span>
                   </div>
                 </div>
-              </div>
 
-              {/* Status Warning */}
-              {selectedFinance?.status === 1 && (
-                <div className="mt-4 p-4 bg-gradient-to-r from-cyan-50 to-kram-50 border border-cyan-200/50 rounded-xl flex items-start gap-3">
-                  <AlertTriangle className="w-5 h-5 text-cyan-600 flex-shrink-0 mt-0.5" />
-                  <div>
-                    <p className="font-semibold text-kram-800">รอการตรวจสอบ</p>
-                    <p className="text-sm text-kram-600">
-                      กรุณาตรวจสอบหลักฐานการชำระเงินให้ครบถ้วนก่อนยืนยัน
-                    </p>
+                {/* Status Warning */}
+                {selectedFinance?.status === 1 && (
+                  <div className="p-3 sm:p-4 bg-gradient-to-r from-cyan-50 to-kram-50 border border-cyan-200/50 rounded-xl flex items-start gap-2 sm:gap-3">
+                    <AlertTriangle className="w-4 h-4 sm:w-5 sm:h-5 text-cyan-600 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <p className="font-semibold text-kram-800 text-sm sm:text-base">รอการตรวจสอบ</p>
+                      <p className="text-xs sm:text-sm text-kram-600">
+                        กรุณาตรวจสอบหลักฐานการชำระเงินให้ครบถ้วนก่อนยืนยัน
+                      </p>
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
+              </div>
             </div>
           </div>
 
-          <DialogFooter className="px-6 py-4 border-t bg-gradient-to-r from-kram-50/50 to-cyan-50/50 gap-3">
+          <DialogFooter className="flex-shrink-0 px-4 sm:px-6 py-3 sm:py-4 border-t bg-gradient-to-r from-kram-50/50 to-cyan-50/50 flex flex-wrap gap-2 sm:gap-3 justify-end">
             <Button
               variant="outline"
               onClick={closeModal}
               disabled={isLoading}
-              className="min-w-[120px] border-kram-200 text-kram-600 hover:bg-kram-50"
+              className="w-full sm:w-auto sm:min-w-[120px] border-kram-200 text-kram-600 hover:bg-kram-50"
             >
               ปิดหน้าต่าง
             </Button>
@@ -682,7 +689,7 @@ export default function PaymentVerificationClient({
                   variant="destructive"
                   onClick={() => handleAction("reject")}
                   disabled={isLoading}
-                  className="min-w-[140px] bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-600 hover:to-orange-600"
+                  className="w-full sm:w-auto sm:min-w-[140px] bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-600 hover:to-orange-600"
                 >
                   {isLoading && actionType === "reject" ? (
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -694,7 +701,7 @@ export default function PaymentVerificationClient({
                 <Button
                   onClick={() => handleAction("approve")}
                   disabled={isLoading}
-                  className="min-w-[180px] bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600 shadow-lg shadow-emerald-500/20"
+                  className="w-full sm:w-auto sm:min-w-[180px] bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600 shadow-lg shadow-emerald-500/20"
                 >
                   {isLoading && actionType === "approve" ? (
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
