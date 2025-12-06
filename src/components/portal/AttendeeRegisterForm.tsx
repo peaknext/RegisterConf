@@ -692,7 +692,10 @@ export function AttendeeRegisterForm({
                 <label
                   key={type.id}
                   className={cn(
-                    "flex items-center gap-3 p-4 rounded-xl border-2 cursor-pointer transition-all duration-200",
+                    "flex items-center gap-3 p-4 rounded-xl border-2 transition-all duration-200",
+                    isPersonalInfoLocked
+                      ? "cursor-not-allowed opacity-60"
+                      : "cursor-pointer",
                     formData.regTypeId === String(type.id)
                       ? "border-cyan-500 bg-gradient-to-r from-cyan-50 to-kram-50 text-kram-700 shadow-md shadow-cyan-500/10"
                       : "border-kram-200 hover:border-cyan-300 hover:bg-cyan-50/30"
@@ -704,6 +707,7 @@ export function AttendeeRegisterForm({
                     value={type.id}
                     checked={formData.regTypeId === String(type.id)}
                     onChange={handleChange}
+                    disabled={isPersonalInfoLocked}
                     className="sr-only"
                   />
                   <div
@@ -901,6 +905,7 @@ export function AttendeeRegisterForm({
                       variant="outline"
                       role="combobox"
                       aria-expanded={positionGroupOpen}
+                      disabled={isPersonalInfoLocked}
                       className="w-full mt-1 justify-between rounded-xl border-kram-200 font-normal h-10"
                     >
                       <span className="truncate">
@@ -1089,7 +1094,10 @@ export function AttendeeRegisterForm({
                 <label
                   key={food.value}
                   className={cn(
-                    "flex items-center gap-2 px-4 py-2 rounded-xl border-2 cursor-pointer transition-all",
+                    "flex items-center gap-2 px-4 py-2 rounded-xl border-2 transition-all",
+                    isPersonalInfoLocked
+                      ? "cursor-not-allowed opacity-60"
+                      : "cursor-pointer",
                     formData.foodType === food.value
                       ? "border-amber-500 bg-amber-50 text-amber-700"
                       : "border-kram-200 hover:border-kram-300"
@@ -1101,6 +1109,7 @@ export function AttendeeRegisterForm({
                     value={food.value}
                     checked={formData.foodType === food.value}
                     onChange={handleChange}
+                    disabled={isPersonalInfoLocked}
                     className="sr-only"
                   />
                   <span className="font-medium">{food.label}</span>

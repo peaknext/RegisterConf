@@ -51,6 +51,20 @@ npm run db:studio    # Open Prisma Studio
 npm run db:seed      # Seed initial data
 ```
 
+### PM2 Production Deployment
+
+Production runs on port 3002 (configured in `ecosystem.config.js`).
+
+```bash
+npm run pm2:start    # Start with PM2
+npm run pm2:stop     # Stop PM2 process
+npm run pm2:restart  # Restart PM2 process
+npm run pm2:logs     # View logs
+npm run pm2:status   # Check status
+```
+
+Note: Build uses `output: "standalone"` mode. Always run `npm run build` before `pm2:start`.
+
 ## Database
 
 - **Host**: localhost:5432
@@ -142,6 +156,12 @@ docker-compose build     # Rebuild image
 - `/api/master` - Master data (hospitals, levels, positions)
 - `/api/admin/*` - Admin-only endpoints (news, schedule, payments, slideshow)
 - `/api/reports/export` - Export reports
+- `/api/settings/*` - Admin settings (config, footer, payment settings, master data CRUD)
+  - `/api/settings/members` - Member/user management (CRUD, import/export, password reset)
+  - `/api/settings/hospitals` - Hospital master data
+  - `/api/settings/hotels` - Hotel master data
+  - `/api/settings/airlines` - Airline master data
+  - `/api/settings/zones` - Zone master data
 
 ## Application Workflow
 
