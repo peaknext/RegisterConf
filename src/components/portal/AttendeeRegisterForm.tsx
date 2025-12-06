@@ -85,7 +85,12 @@ interface AttendeeData {
   hotelOther: string | null;
   busToMeet: number | null;
   level?: { code: string; name: string; group: string | null } | null;
-  hospital?: { code: string; name: string; province: string | null; zone: { code: string; name: string } | null } | null;
+  hospital?: {
+    code: string;
+    name: string;
+    province: string | null;
+    zone: { code: string; name: string } | null;
+  } | null;
 }
 
 interface AttendeeRegisterFormProps {
@@ -112,6 +117,13 @@ interface AttendeeRegisterFormProps {
   // Edit mode props
   mode?: "create" | "edit";
   attendee?: AttendeeData | null;
+  payment?: {
+    id: number;
+    fileName: string | null;
+    status: number;
+    createdAt: Date;
+    paidDate: Date | null;
+  } | null;
 }
 
 const vehicleTypes = [
@@ -161,11 +173,14 @@ export function AttendeeRegisterForm({
   isAdmin,
   mode = "create",
   attendee,
+  payment,
 }: AttendeeRegisterFormProps) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const isEditMode = mode === "edit";
+  const hasPayment = payment !== null && payment !== undefined;
+  const isPersonalInfoLocked = isEditMode && hasPayment; // Lock personal info when payment submitted
 
   // Combobox open states
   const [prefixOpen, setPrefixOpen] = useState(false);
@@ -232,7 +247,9 @@ export function AttendeeRegisterForm({
         trainDate2: formatDateForInput(attendee.trainDate2),
         trainLine2: attendee.trainLine2 || "",
         trainTime2: formatTimeForInput(attendee.trainTime2),
-        trainShuttle: attendee.trainShuttle ? String(attendee.trainShuttle) : "",
+        trainShuttle: attendee.trainShuttle
+          ? String(attendee.trainShuttle)
+          : "",
         // Accommodation
         hotelId: attendee.hotelId ? String(attendee.hotelId) : "",
         hotelOther: attendee.hotelOther || "",
@@ -356,7 +373,9 @@ export function AttendeeRegisterForm({
         hospitalCode: isAdmin ? formData.hospitalCode : userHospital?.code,
       };
 
-      const url = isEditMode ? `/api/attendees/${attendee?.id}` : "/api/attendees";
+      const url = isEditMode
+        ? `/api/attendees/${attendee?.id}`
+        : "/api/attendees";
       const method = isEditMode ? "PUT" : "POST";
 
       const response = await fetch(url, {
@@ -371,7 +390,9 @@ export function AttendeeRegisterForm({
         throw new Error(data.error || "เกิดข้อผิดพลาด");
       }
 
-      router.push(`/portal/registration/${isEditMode ? attendee?.id : data.id}`);
+      router.push(
+        `/portal/registration/${isEditMode ? attendee?.id : data.id}`
+      );
       router.refresh();
     } catch (err) {
       setError(
@@ -386,8 +407,18 @@ export function AttendeeRegisterForm({
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4 animate-fade-in">
-        <Link href={isEditMode ? `/portal/registration/${attendee?.id}` : "/portal/dashboard"}>
-          <Button variant="ghost" size="icon" className="rounded-xl hover:bg-kram-100 hover:text-kram-700 transition-colors">
+        <Link
+          href={
+            isEditMode
+              ? `/portal/registration/${attendee?.id}`
+              : "/portal/dashboard"
+          }
+        >
+          <Button
+            variant="ghost"
+            size="icon"
+            className="rounded-xl hover:bg-kram-100 hover:text-kram-700 transition-colors"
+          >
             <ArrowLeft className="w-5 h-5" />
           </Button>
         </Link>
@@ -452,7 +483,10 @@ export function AttendeeRegisterForm({
                         <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                    <PopoverContent
+                      className="w-[--radix-popover-trigger-width] p-0"
+                      align="start"
+                    >
                       <Command>
                         <CommandInput placeholder="ค้นหาเขตสุขภาพ..." />
                         <CommandList>
@@ -510,7 +544,10 @@ export function AttendeeRegisterForm({
                         <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                    <PopoverContent
+                      className="w-[--radix-popover-trigger-width] p-0"
+                      align="start"
+                    >
                       <Command>
                         <CommandInput placeholder="ค้นหาจังหวัด..." />
                         <CommandList>
@@ -571,7 +608,10 @@ export function AttendeeRegisterForm({
                         <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                    <PopoverContent
+                      className="w-[--radix-popover-trigger-width] p-0"
+                      align="start"
+                    >
                       <Command>
                         <CommandInput placeholder="ค้นหาโรงพยาบาล..." />
                         <CommandList>
@@ -623,7 +663,9 @@ export function AttendeeRegisterForm({
                   </p>
                 </div>
                 <div className="p-4 bg-kram-50 rounded-xl">
-                  <p className="text-sm text-kram-500 mb-1">สถานที่ปฏิบัติงาน</p>
+                  <p className="text-sm text-kram-500 mb-1">
+                    สถานที่ปฏิบัติงาน
+                  </p>
                   <p className="font-medium text-kram-900">
                     {userHospital?.name || "-"}
                   </p>
@@ -707,6 +749,7 @@ export function AttendeeRegisterForm({
                       variant="outline"
                       role="combobox"
                       aria-expanded={prefixOpen}
+                      disabled={isPersonalInfoLocked}
                       className="w-full mt-1 justify-between rounded-xl border-kram-200 font-normal h-10"
                     >
                       <span className="truncate">
@@ -715,7 +758,10 @@ export function AttendeeRegisterForm({
                       <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                  <PopoverContent
+                    className="w-[--radix-popover-trigger-width] p-0"
+                    align="start"
+                  >
                     <Command>
                       <CommandList>
                         <CommandGroup>
@@ -758,6 +804,7 @@ export function AttendeeRegisterForm({
                   value={formData.firstName}
                   onChange={handleChange}
                   required
+                  disabled={isPersonalInfoLocked}
                   className="mt-1 rounded-xl border-kram-200 focus:ring-cyan-500"
                 />
               </div>
@@ -771,6 +818,7 @@ export function AttendeeRegisterForm({
                   value={formData.lastName}
                   onChange={handleChange}
                   required
+                  disabled={isPersonalInfoLocked}
                   className="mt-1 rounded-xl border-kram-200 focus:ring-cyan-500"
                 />
               </div>
@@ -789,6 +837,7 @@ export function AttendeeRegisterForm({
                       variant="outline"
                       role="combobox"
                       aria-expanded={positionOpen}
+                      disabled={isPersonalInfoLocked}
                       className="w-full mt-1 justify-between rounded-xl border-kram-200 font-normal h-10"
                     >
                       <span className="truncate">
@@ -801,7 +850,10 @@ export function AttendeeRegisterForm({
                       <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                  <PopoverContent
+                    className="w-[--radix-popover-trigger-width] p-0"
+                    align="start"
+                  >
                     <Command>
                       <CommandInput placeholder="ค้นหาวิชาชีพ..." />
                       <CommandList>
@@ -840,7 +892,10 @@ export function AttendeeRegisterForm({
               {/* Position Group */}
               <div>
                 <Label>ประเภทตำแหน่ง</Label>
-                <Popover open={positionGroupOpen} onOpenChange={setPositionGroupOpen}>
+                <Popover
+                  open={positionGroupOpen}
+                  onOpenChange={setPositionGroupOpen}
+                >
                   <PopoverTrigger asChild>
                     <Button
                       variant="outline"
@@ -854,7 +909,10 @@ export function AttendeeRegisterForm({
                       <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                  <PopoverContent
+                    className="w-[--radix-popover-trigger-width] p-0"
+                    align="start"
+                  >
                     <Command>
                       <CommandInput placeholder="ค้นหาประเภทตำแหน่ง..." />
                       <CommandList>
@@ -900,7 +958,7 @@ export function AttendeeRegisterForm({
                       variant="outline"
                       role="combobox"
                       aria-expanded={levelOpen}
-                      disabled={!formData.positionGroup}
+                      disabled={!formData.positionGroup || isPersonalInfoLocked}
                       className="w-full mt-1 justify-between rounded-xl border-kram-200 font-normal h-10 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <span className="truncate">
@@ -913,7 +971,10 @@ export function AttendeeRegisterForm({
                       <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                  <PopoverContent
+                    className="w-[--radix-popover-trigger-width] p-0"
+                    align="start"
+                  >
                     <Command>
                       <CommandInput placeholder="ค้นหาระดับ..." />
                       <CommandList>
@@ -975,6 +1036,7 @@ export function AttendeeRegisterForm({
                   value={formData.phone}
                   onChange={handleChange}
                   required
+                  disabled={isPersonalInfoLocked}
                   placeholder="08x-xxx-xxxx"
                   className="mt-1 rounded-xl border-kram-200 focus:ring-cyan-500"
                 />
@@ -987,6 +1049,7 @@ export function AttendeeRegisterForm({
                   type="email"
                   value={formData.email}
                   onChange={handleChange}
+                  disabled={isPersonalInfoLocked}
                   placeholder="example@email.com"
                   className="mt-1 rounded-xl border-kram-200 focus:ring-cyan-500"
                 />
@@ -998,6 +1061,7 @@ export function AttendeeRegisterForm({
                   name="line"
                   value={formData.line}
                   onChange={handleChange}
+                  disabled={isPersonalInfoLocked}
                   className="mt-1 rounded-xl border-kram-200 focus:ring-cyan-500"
                 />
               </div>
@@ -1135,7 +1199,10 @@ export function AttendeeRegisterForm({
                           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                         </Button>
                       </PopoverTrigger>
-                      <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                      <PopoverContent
+                        className="w-[--radix-popover-trigger-width] p-0"
+                        align="start"
+                      >
                         <Command>
                           <CommandInput placeholder="ค้นหาสายการบิน..." />
                           <CommandList>
@@ -1226,7 +1293,10 @@ export function AttendeeRegisterForm({
                           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                         </Button>
                       </PopoverTrigger>
-                      <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                      <PopoverContent
+                        className="w-[--radix-popover-trigger-width] p-0"
+                        align="start"
+                      >
                         <Command>
                           <CommandInput placeholder="ค้นหาสายการบิน..." />
                           <CommandList>
@@ -1288,9 +1358,7 @@ export function AttendeeRegisterForm({
 
               {/* Shuttle */}
               <div>
-                <Label className="mb-3 block">
-                  ต้องการรถรับ-ส่งจากสนามบิน
-                </Label>
+                <Label className="mb-3 block">ต้องการรถรับ-ส่งจากสนามบิน</Label>
                 <div className="flex gap-4">
                   <label
                     className={cn(
@@ -1637,7 +1705,10 @@ export function AttendeeRegisterForm({
                       <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                  <PopoverContent
+                    className="w-[--radix-popover-trigger-width] p-0"
+                    align="start"
+                  >
                     <Command>
                       <CommandInput placeholder="ค้นหาโรงแรม..." />
                       <CommandList>
@@ -1732,12 +1803,12 @@ export function AttendeeRegisterForm({
         </Card>
 
         {/* Section 9: Payment Info */}
-        <Card
-          className="border-0 bg-gradient-to-br from-cyan-50/70 to-kram-50/70 backdrop-blur-sm shadow-lg shadow-cyan-500/10 overflow-hidden animate-fade-in [animation-delay:450ms]"
-        >
+        <Card className="border-0 bg-gradient-to-br from-cyan-50/70 to-kram-50/70 backdrop-blur-sm shadow-lg shadow-cyan-500/10 overflow-hidden animate-fade-in [animation-delay:450ms]">
           <div
             className="h-1"
-            style={{ background: "linear-gradient(to right, #01a6e5, #0088cc)" }}
+            style={{
+              background: "linear-gradient(to right, #01a6e5, #0088cc)",
+            }}
           />
           <CardHeader className="pb-4">
             <CardTitle
@@ -1746,7 +1817,10 @@ export function AttendeeRegisterForm({
             >
               <div
                 className="w-10 h-10 rounded-xl flex items-center justify-center"
-                style={{ background: "linear-gradient(to bottom right, #01a6e5, #0088cc)" }}
+                style={{
+                  background:
+                    "linear-gradient(to bottom right, #01a6e5, #0088cc)",
+                }}
               >
                 <Banknote className="w-5 h-5 text-white" />
               </div>
@@ -1754,57 +1828,147 @@ export function AttendeeRegisterForm({
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div
-              className="p-4 bg-white rounded-xl border"
-              style={{ borderColor: "rgba(1, 166, 229, 0.3)" }}
-            >
-              <div className="flex gap-4">
-                {/* KTB Logo */}
-                <div className="flex-shrink-0">
-                  <div className="w-16 h-16 rounded-full overflow-hidden border-2 shadow-md" style={{ borderColor: "#01a6e5" }}>
-                    <Image
-                      src="/KTB_Logo.png"
-                      alt="Krungthai Bank Logo"
-                      width={64}
-                      height={64}
-                      className="w-full h-full object-cover"
-                    />
+            {hasPayment ? (
+              /* Payment submitted - show status */
+              <div
+                className="p-6 bg-white rounded-xl border"
+                style={{ borderColor: "rgba(1, 166, 229, 0.3)" }}
+              >
+                {/* Success Header */}
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center">
+                    <Check className="w-6 h-6 text-emerald-600" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-emerald-700">
+                      แจ้งการโอนเงินเรียบร้อยแล้ว
+                    </h3>
+                    <p className="text-sm text-gray-600">
+                      {payment.status === 1 && "รอการตรวจสอบจากเจ้าหน้าที่"}
+                      {payment.status === 2 && "ตรวจสอบและยืนยันแล้ว"}
+                      {payment.status === 9 && "ไม่ผ่านการตรวจสอบ"}
+                    </p>
                   </div>
                 </div>
-                {/* Bank Details */}
-                <div className="flex-1 space-y-2 text-sm">
-                  <p style={{ color: "#01a6e5" }} className="font-medium">
-                    ชื่อบัญชี:{" "}
-                    <span className="font-normal text-gray-700">
-                      มูลนิธิ นายแพทย์บุญยงค์ วงศ์รักมิตร
-                    </span>
-                  </p>
-                  <p style={{ color: "#01a6e5" }} className="font-medium">
-                    ธนาคาร:{" "}
-                    <span className="font-normal text-gray-700">กรุงไทย (สาขาน่าน)</span>
-                  </p>
-                  <p style={{ color: "#01a6e5" }} className="font-medium">
-                    เลขที่บัญชี:{" "}
-                    <span
-                      className="font-semibold text-lg"
-                      style={{ color: "#01a6e5" }}
+
+                {/* Payment Details */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm text-gray-500">วันที่โอนเงิน</p>
+                    <p className="text-base font-medium text-gray-900">
+                      {payment.paidDate
+                        ? new Date(payment.paidDate).toLocaleDateString(
+                            "th-TH",
+                            {
+                              year: "numeric",
+                              month: "long",
+                              day: "numeric",
+                            }
+                          )
+                        : "-"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500">วันที่แจ้งชำระ</p>
+                    <p className="text-base font-medium text-gray-900">
+                      {new Date(payment.createdAt).toLocaleDateString("th-TH", {
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                      })}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500">เวลาที่แจ้งชำระ</p>
+                    <p className="text-base font-medium text-gray-900">
+                      {new Date(payment.createdAt).toLocaleTimeString("th-TH", {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}{" "}
+                      น.
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500">สถานะ</p>
+                    <div className="mt-1">
+                      {payment.status === 1 && (
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                          รอตรวจสอบ
+                        </span>
+                      )}
+                      {payment.status === 2 && (
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
+                          ตรวจสอบแล้ว
+                        </span>
+                      )}
+                      {payment.status === 9 && (
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                          ไม่ผ่าน
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              /* No payment - show bank details */
+              <div
+                className="p-4 bg-white rounded-xl border"
+                style={{ borderColor: "rgba(1, 166, 229, 0.3)" }}
+              >
+                <div className="flex gap-4">
+                  {/* KTB Logo */}
+                  <div className="flex-shrink-0">
+                    <div
+                      className="w-16 h-16 rounded-full overflow-hidden border-2 shadow-md"
+                      style={{ borderColor: "#01a6e5" }}
                     >
-                      507-3-44659-3
-                    </span>
+                      <Image
+                        src="/KTB_Logo.png"
+                        alt="Krungthai Bank Logo"
+                        width={64}
+                        height={64}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  </div>
+                  {/* Bank Details */}
+                  <div className="flex-1 space-y-2 text-sm">
+                    <p style={{ color: "#01a6e5" }} className="font-medium">
+                      ชื่อบัญชี:{" "}
+                      <span className="font-normal text-gray-700">
+                        มูลนิธิ นายแพทย์บุญยงค์ วงศ์รักมิตร
+                      </span>
+                    </p>
+                    <p style={{ color: "#01a6e5" }} className="font-medium">
+                      ธนาคาร:{" "}
+                      <span className="font-normal text-gray-700">
+                        กรุงไทย (สาขาน่าน)
+                      </span>
+                    </p>
+                    <p style={{ color: "#01a6e5" }} className="font-medium">
+                      เลขที่บัญชี:{" "}
+                      <span
+                        className="font-semibold text-lg"
+                        style={{ color: "#01a6e5" }}
+                      >
+                        507-3-44659-3
+                      </span>
+                    </p>
+                  </div>
+                </div>
+                <div
+                  className="mt-4 pt-4 border-t"
+                  style={{ borderColor: "rgba(1, 166, 229, 0.2)" }}
+                >
+                  <p className="text-sm" style={{ color: "#01a6e5" }}>
+                    แจ้งการชำระเงิน ที่เมนู{" "}
+                    <span className="font-semibold">แจ้งการชำระเงิน</span>{" "}
+                    หลังจากลงทะเบียนแล้ว
                   </p>
                 </div>
               </div>
-              <div
-                className="mt-4 pt-4 border-t"
-                style={{ borderColor: "rgba(1, 166, 229, 0.2)" }}
-              >
-                <p className="text-sm" style={{ color: "#01a6e5" }}>
-                  แจ้งการชำระเงิน ที่เมนู{" "}
-                  <span className="font-semibold">แจ้งการชำระเงิน</span>{" "}
-                  หลังจากลงทะเบียนแล้ว
-                </p>
-              </div>
-            </div>
+            )}
           </CardContent>
         </Card>
 
@@ -1833,8 +1997,18 @@ export function AttendeeRegisterForm({
 
         {/* Submit Button */}
         <div className="flex justify-end gap-4 pt-4 animate-fade-in [animation-delay:550ms]">
-          <Link href={isEditMode ? `/portal/registration/${attendee?.id}` : "/portal/dashboard"}>
-            <Button type="button" variant="outline" className="rounded-xl border-kram-200 hover:bg-kram-50 hover:border-kram-300 transition-colors">
+          <Link
+            href={
+              isEditMode
+                ? `/portal/registration/${attendee?.id}`
+                : "/portal/dashboard"
+            }
+          >
+            <Button
+              type="button"
+              variant="outline"
+              className="rounded-xl border-kram-200 hover:bg-kram-50 hover:border-kram-300 transition-colors"
+            >
               ยกเลิก
             </Button>
           </Link>

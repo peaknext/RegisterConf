@@ -50,6 +50,7 @@ export default async function AttendeeEditPage({
     zones,
     hospitals,
     userHospital,
+    payment,
   ] = await Promise.all([
     getAttendee(parseInt(id), session.user.hospitalCode, isAdmin),
     prisma.regType.findMany({
@@ -92,6 +93,17 @@ export default async function AttendeeEditPage({
           include: { zone: true },
         })
       : Promise.resolve(null),
+    // Payment info for this attendee
+    prisma.finance.findFirst({
+      where: {
+        attendeeIds: {
+          contains: parseInt(id).toString(),
+        },
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    }),
   ]);
 
   if (!attendee) {
@@ -119,6 +131,7 @@ export default async function AttendeeEditPage({
       isAdmin={isAdmin}
       mode="edit"
       attendee={attendee}
+      payment={payment}
     />
   );
 }
