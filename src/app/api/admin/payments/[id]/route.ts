@@ -1,7 +1,46 @@
+/**
+ * Payment approval/rejection endpoint for admin.
+ *
+ * Handles approve and reject actions for payment submissions.
+ * Admin-only endpoint that updates both finance and attendee records.
+ *
+ * @route PATCH /api/admin/payments/[id]
+ * @security Admin only (memberType === 99)
+ *
+ * Request body:
+ * - action: "approve" | "reject"
+ *
+ * On approve:
+ * - finance.status = 2 (approved)
+ * - finance.confirmedBy = admin ID
+ * - finance.confirmedAt = now
+ * - finance.paidDate = now
+ * - All linked attendees.status = 9 (paid)
+ *
+ * On reject:
+ * - finance.status = 9 (rejected)
+ * - finance.confirmedBy = admin ID
+ * - finance.confirmedAt = now
+ * - All linked attendees.status = 1 (pending - allows resubmission)
+ *
+ * Finance status codes:
+ * - 1 = รอตรวจสอบ (Awaiting review)
+ * - 2 = ผ่าน (Approved)
+ * - 9 = ไม่ผ่าน (Rejected)
+ *
+ * @module api/admin/payments/[id]
+ */
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 
+/**
+ * Approve or reject a payment submission.
+ *
+ * @param request - HTTP request with action in body
+ * @param params - Route params containing payment ID
+ * @returns Success response or error JSON
+ */
 export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> }

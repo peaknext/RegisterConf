@@ -1,3 +1,25 @@
+/**
+ * Hero Section Component with Cinematic Slideshow.
+ *
+ * Full-screen hero section featuring an auto-playing slideshow background
+ * with Ken Burns effect (zoom/pan animation) and smooth transitions.
+ *
+ * @module Hero
+ *
+ * ## Features
+ * - **Auto-play Slideshow**: 6-second interval with progress indicator
+ * - **Ken Burns Effect**: Cinematic zoom/pan animation on each slide
+ * - **Manual Navigation**: Prev/next buttons and dot indicators
+ * - **Responsive Design**: Full-screen on all devices
+ * - **Transition Guards**: Prevents navigation during transitions
+ *
+ * ## Animation Details
+ * - Slide transition: 1 second with opacity fade
+ * - Ken Burns scale: 1.0 to 1.15 over slide duration
+ * - Progress bar: Linear progress for each slide
+ *
+ * @see {@link ../../app/(public)/page.tsx} for landing page integration
+ */
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
@@ -14,6 +36,14 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+/**
+ * Slide data structure for the hero slideshow.
+ *
+ * @property id - Unique slide identifier
+ * @property imageUrl - Image path (relative to public folder or full URL)
+ * @property title - Optional overlay title
+ * @property linkUrl - Optional click-through URL
+ */
 interface Slide {
   id: number;
   title?: string | null;
@@ -21,11 +51,18 @@ interface Slide {
   linkUrl?: string | null;
 }
 
+/**
+ * Props for Hero component.
+ *
+ * @property slides - Array of slides from database. Falls back to default local images if empty.
+ */
 interface HeroProps {
   slides?: Slide[];
 }
 
-// Default slides using local images
+/**
+ * Default slideshow images (used when no database slides provided).
+ */
 const defaultSlides: Slide[] = [
   { id: 1, imageUrl: "/slideshow_001.png", title: null, linkUrl: null },
   { id: 2, imageUrl: "/slideshow_002.png", title: null, linkUrl: null },
@@ -34,10 +71,25 @@ const defaultSlides: Slide[] = [
   { id: 5, imageUrl: "/slideshow_005.png", title: null, linkUrl: null },
 ];
 
+/**
+ * Full-screen hero section with auto-playing cinematic slideshow.
+ *
+ * @component
+ *
+ * @example
+ * // With database slides
+ * <Hero slides={slideshowData} />
+ *
+ * @example
+ * // Falls back to default images
+ * <Hero />
+ */
 export function Hero({ slides }: HeroProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [progress, setProgress] = useState(0);
+
+  /** Auto-play interval in milliseconds */
   const autoPlayInterval = 6000;
 
   const activeSlides = slides && slides.length > 0 ? slides : defaultSlides;

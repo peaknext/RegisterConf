@@ -1,3 +1,29 @@
+/**
+ * News article create/edit form component for admin panel.
+ *
+ * Features:
+ * - Dual-mode: Create new or edit existing news articles
+ * - Form fields: title, content (HTML), image URL, publish status
+ * - Auto-detects mode based on presence of `news` prop
+ * - Loading state with spinner during submission
+ * - Error handling with Thai error messages
+ * - Redirects to news list on successful save
+ *
+ * API endpoints used:
+ * - POST /api/admin/news - Create new article
+ * - PATCH /api/admin/news/[id] - Update existing article
+ *
+ * @module components/admin/NewsForm
+ *
+ * @example
+ * // Create mode (no news prop)
+ * <NewsForm />
+ *
+ * @example
+ * // Edit mode (with news prop)
+ * const news = await prisma.news.findUnique({ where: { id } });
+ * <NewsForm news={news} />
+ */
 "use client";
 
 import { useState } from "react";
@@ -10,21 +36,40 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { ArrowLeft, Save, Loader2 } from "lucide-react";
 import Link from "next/link";
 
+/**
+ * Props for the NewsForm component.
+ */
 interface NewsFormProps {
+  /** Existing news data for edit mode (omit for create mode) */
   news?: {
+    /** Database ID */
     id: number;
+    /** Article title/headline */
     title: string;
+    /** Article content (supports HTML tags) */
     content: string;
+    /** Featured image URL (optional) */
     imageUrl: string | null;
+    /** Whether article is published and visible */
     isPublished: boolean;
   };
 }
 
+/**
+ * News article form with create/edit functionality.
+ *
+ * @component
+ * @param props - Component props
+ * @param props.news - Existing news data for edit mode (optional)
+ */
 export function NewsForm({ news }: NewsFormProps) {
   const router = useRouter();
+  /** Submission loading state */
   const [isLoading, setIsLoading] = useState(false);
+  /** Error message for display */
   const [error, setError] = useState("");
 
+  /** Form field values with defaults from existing news or empty */
   const [formData, setFormData] = useState({
     title: news?.title || "",
     content: news?.content || "",
@@ -32,6 +77,10 @@ export function NewsForm({ news }: NewsFormProps) {
     isPublished: news?.isPublished ?? true,
   });
 
+  /**
+   * Handle input field changes.
+   * @param e - Input change event
+   */
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
@@ -39,6 +88,11 @@ export function NewsForm({ news }: NewsFormProps) {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  /**
+   * Handle form submission for create/update.
+   * Uses POST for new articles, PATCH for existing.
+   * @param e - Form submit event
+   */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);

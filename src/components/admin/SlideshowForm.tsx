@@ -1,3 +1,30 @@
+/**
+ * Slideshow image create/edit form for admin panel.
+ *
+ * Features:
+ * - Dual-mode: Create new or edit existing slideshow slides
+ * - Form fields: title (optional), image URL, link URL, sort order, active status
+ * - Live image preview when URL is entered
+ * - Sort order for carousel display sequence
+ * - Active/inactive toggle for visibility control
+ * - Loading state with spinner during submission
+ * - Error handling with Thai error messages
+ *
+ * API endpoints used:
+ * - POST /api/admin/slideshow - Create new slide
+ * - PATCH /api/admin/slideshow/[id] - Update existing slide
+ *
+ * @module components/admin/SlideshowForm
+ *
+ * @example
+ * // Create mode
+ * <SlideshowForm />
+ *
+ * @example
+ * // Edit mode
+ * const slideshow = await prisma.slideshow.findUnique({ where: { id } });
+ * <SlideshowForm slideshow={slideshow} />
+ */
 "use client";
 
 import { useState } from "react";
@@ -10,22 +37,42 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { ArrowLeft, Save, Loader2 } from "lucide-react";
 import Link from "next/link";
 
+/**
+ * Props for the SlideshowForm component.
+ */
 interface SlideshowFormProps {
+  /** Existing slideshow data for edit mode (omit for create mode) */
   slideshow?: {
+    /** Database ID */
     id: number;
+    /** Optional title/caption for the slide */
     title: string | null;
+    /** Image URL for the slide (required) */
     imageUrl: string;
+    /** Optional link URL when slide is clicked */
     linkUrl: string | null;
+    /** Display order in carousel (lower first) */
     sortOrder: number;
+    /** Whether slide is visible in carousel */
     isActive: boolean;
   };
 }
 
+/**
+ * Slideshow slide form with create/edit functionality.
+ *
+ * @component
+ * @param props - Component props
+ * @param props.slideshow - Existing slide data for edit mode (optional)
+ */
 export function SlideshowForm({ slideshow }: SlideshowFormProps) {
   const router = useRouter();
+  /** Submission loading state */
   const [isLoading, setIsLoading] = useState(false);
+  /** Error message for display */
   const [error, setError] = useState("");
 
+  /** Form field values with defaults from existing slide or defaults */
   const [formData, setFormData] = useState({
     title: slideshow?.title || "",
     imageUrl: slideshow?.imageUrl || "",
@@ -34,11 +81,20 @@ export function SlideshowForm({ slideshow }: SlideshowFormProps) {
     isActive: slideshow?.isActive ?? true,
   });
 
+  /**
+   * Handle input field changes.
+   * @param e - Input change event
+   */
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  /**
+   * Handle form submission for create/update.
+   * Converts sortOrder to integer before sending.
+   * @param e - Form submit event
+   */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);

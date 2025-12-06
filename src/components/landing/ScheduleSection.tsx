@@ -1,9 +1,42 @@
+/**
+ * Conference Schedule Section Component.
+ *
+ * Displays a multi-day conference schedule with room-based parallel sessions.
+ * Supports day tabs, time slot grouping, and various session types.
+ *
+ * @module ScheduleSection
+ *
+ * ## Features
+ * - **Multi-day Tabs**: Switch between conference days
+ * - **Time Slot Grouping**: Sessions grouped by start/end time
+ * - **Room Assignment**: Main hall + 2 breakout rooms with color coding
+ * - **Session Types**: Session, break, meal, event with icons
+ * - **Responsive Design**: Mobile-optimized layout
+ *
+ * ## Room Configuration
+ * - main: ห้องประชุมใหญ่ (blue)
+ * - room1: ห้องย่อย 1 (cyan)
+ * - room2: ห้องย่อย 2 (gold)
+ * - all: Spans all columns (e.g., meals, breaks)
+ *
+ * @see {@link ../../app/(public)/page.tsx} for landing page integration
+ */
 "use client";
 
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { Clock, User, Calendar, Coffee, Utensils } from "lucide-react";
 
+/**
+ * Schedule item data structure from database.
+ *
+ * @property dayNumber - Day number (1, 2, 3...) for tab grouping
+ * @property date - Actual date of the session
+ * @property startTime - Start time (HH:mm format)
+ * @property endTime - End time (HH:mm format)
+ * @property room - Room assignment: "main", "room1", "room2", or "all" for full-width
+ * @property type - Session type: "session", "break", "meal", or "event"
+ */
 interface ScheduleItem {
   id: number;
   dayNumber: number;
@@ -14,10 +47,15 @@ interface ScheduleItem {
   description?: string | null;
   location?: string | null;
   speaker?: string | null;
-  room?: "main" | "room1" | "room2" | "all" | null; // all = spans all columns
+  room?: "main" | "room1" | "room2" | "all" | null;
   type?: "session" | "break" | "meal" | "event" | null;
 }
 
+/**
+ * Props for ScheduleSection component.
+ *
+ * @property schedules - Array of schedule items from database. Falls back to mock data if empty.
+ */
 interface ScheduleSectionProps {
   schedules?: ScheduleItem[];
 }
@@ -64,15 +102,35 @@ const defaultSchedules: ScheduleItem[] = [
   { id: 31, dayNumber: 3, date: new Date("2026-06-27"), startTime: "14:00", endTime: "14:30", title: "พิธีปิดการประชุม & ส่งมอบธง", speaker: "ประธานชมรม", room: "main", type: "session" },
 ];
 
+/**
+ * Room configuration with color coding.
+ */
 const rooms = [
   { id: "main", name: "ห้องประชุมใหญ่", color: "bg-kram-600" },
   { id: "room1", name: "ห้องย่อย 1", color: "bg-cyan-600" },
   { id: "room2", name: "ห้องย่อย 2", color: "bg-gold-600" },
 ];
 
+/**
+ * Multi-day conference schedule display with room-based layout.
+ *
+ * @component
+ *
+ * @example
+ * // With database schedules
+ * <ScheduleSection schedules={schedules} />
+ *
+ * @example
+ * // Falls back to mock data if no schedules provided
+ * <ScheduleSection />
+ */
 export function ScheduleSection({ schedules }: ScheduleSectionProps) {
+  // Use provided schedules or fall back to mock data
   const activeSchedules = schedules && schedules.length > 0 ? schedules : defaultSchedules;
 
+  /**
+   * Group schedules by day number for tab navigation.
+   */
   const schedulesByDay = activeSchedules.reduce((acc, schedule) => {
     const day = schedule.dayNumber;
     if (!acc[day]) acc[day] = [];
@@ -83,13 +141,19 @@ export function ScheduleSection({ schedules }: ScheduleSectionProps) {
   const days = Object.keys(schedulesByDay).map(Number).sort((a, b) => a - b);
   const [activeDay, setActiveDay] = useState(days[0] || 1);
 
+  /**
+   * Format date to Thai short format (e.g., "25 มิ.ย.")
+   */
   const formatShortDate = (date: Date) => {
     return new Date(date).toLocaleDateString("th-TH", { day: "numeric", month: "short" });
   };
 
   const currentSchedules = schedulesByDay[activeDay] || [];
 
-  // Group by time slot
+  /**
+   * Group schedules by time slot for parallel session display.
+   * Sessions at same time appear in the same row.
+   */
   const timeSlots = currentSchedules.reduce((acc, schedule) => {
     const key = `${schedule.startTime}-${schedule.endTime}`;
     if (!acc[key]) acc[key] = { startTime: schedule.startTime, endTime: schedule.endTime, items: [] };
@@ -99,6 +163,9 @@ export function ScheduleSection({ schedules }: ScheduleSectionProps) {
 
   const sortedTimeSlots = Object.values(timeSlots).sort((a, b) => a.startTime.localeCompare(b.startTime));
 
+  /**
+   * Get icon for session type (break=coffee, meal=utensils).
+   */
   const getTypeIcon = (type: string | null | undefined) => {
     switch (type) {
       case "break": return <Coffee className="w-3.5 h-3.5" />;
@@ -107,6 +174,9 @@ export function ScheduleSection({ schedules }: ScheduleSectionProps) {
     }
   };
 
+  /**
+   * Get styling classes for session type.
+   */
   const getTypeStyle = (type: string | null | undefined) => {
     switch (type) {
       case "break": return "bg-gray-50 border-gray-200 text-gray-500";
@@ -116,6 +186,9 @@ export function ScheduleSection({ schedules }: ScheduleSectionProps) {
     }
   };
 
+  /**
+   * Get background color class for room indicator.
+   */
   const getRoomColor = (room: string | null | undefined) => {
     switch (room) {
       case "main": return "bg-kram-600";

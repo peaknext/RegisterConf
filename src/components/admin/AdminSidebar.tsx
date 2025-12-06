@@ -1,3 +1,45 @@
+/**
+ * Admin panel sidebar navigation component.
+ *
+ * Provides navigation for admin-specific functionality including:
+ * - Content management (news, schedule, slideshow)
+ * - Master data management (hotels, members, settings)
+ * - Payment approval workflow
+ *
+ * Features:
+ * - Responsive design with mobile hamburger menu
+ * - Active route highlighting (supports nested routes)
+ * - Quick link back to portal dashboard
+ * - User info display with avatar initial
+ * - Sign out with dynamic origin support
+ *
+ * Menu items:
+ * - แดชบอร์ด (Dashboard) - Admin overview
+ * - ข่าวสาร (News) - News article management
+ * - กำหนดการ (Schedule) - Conference schedule
+ * - สไลด์โชว์ (Slideshow) - Landing page carousel
+ * - โรงแรม (Hotels) - Hotel information
+ * - อนุมัติชำระเงิน (Payments) - Payment approval
+ * - จัดการสมาชิก (Members) - User management
+ * - ตั้งค่า (Settings) - System configuration
+ *
+ * @module components/admin/AdminSidebar
+ * @see {@link ../portal/Sidebar.tsx} for portal sidebar
+ *
+ * @example
+ * // In admin layout
+ * import { AdminSidebar } from "@/components/admin/AdminSidebar";
+ *
+ * export default function AdminLayout({ children }) {
+ *   const session = await auth();
+ *   return (
+ *     <div className="flex">
+ *       <AdminSidebar user={session.user} />
+ *       <main className="lg:ml-64">{children}</main>
+ *     </div>
+ *   );
+ * }
+ */
 "use client";
 
 import { useState } from "react";
@@ -21,13 +63,23 @@ import {
   Shield,
 } from "lucide-react";
 
+/**
+ * Props for the AdminSidebar component.
+ */
 interface AdminSidebarProps {
+  /** User object from session for display */
   user: {
+    /** Admin display name */
     name?: string | null;
+    /** Admin email address (first letter used as avatar) */
     email?: string | null;
   };
 }
 
+/**
+ * Admin navigation menu items.
+ * Active state detection supports nested routes (e.g., /admin/news/create).
+ */
 const menuItems = [
   { label: "แดชบอร์ด", href: "/admin", icon: LayoutDashboard },
   { label: "ข่าวสาร", href: "/admin/news", icon: Newspaper },
@@ -39,10 +91,27 @@ const menuItems = [
   { label: "ตั้งค่า", href: "/admin/settings", icon: Settings },
 ];
 
+/**
+ * Admin sidebar component with content management navigation.
+ *
+ * Renders a responsive sidebar that:
+ * - Highlights active routes (including nested paths)
+ * - Provides mobile hamburger menu on small screens
+ * - Shows admin user info with email initial avatar
+ * - Includes quick link back to portal
+ *
+ * @component
+ * @param props - Component props
+ * @param props.user - Admin user session data for display
+ */
 export function AdminSidebar({ user }: AdminSidebarProps) {
   const pathname = usePathname();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
+  /**
+   * Handle admin sign out with dynamic origin detection.
+   * Uses window.location.origin to support ngrok/external domains.
+   */
   const handleSignOut = () => {
     // Use dynamic origin for ngrok/external domain support
     const callbackUrl = typeof window !== "undefined"

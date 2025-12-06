@@ -1,8 +1,37 @@
+/**
+ * Decorative wave SVG divider for section transitions.
+ *
+ * Features:
+ * - Three-layer wave with varying opacity
+ * - Customizable fill color (default: kram-900 #040b56)
+ * - Preserves aspect ratio
+ * - Full-width responsive
+ *
+ * @module components/landing/WaveDivider
+ *
+ * @example
+ * // Between sections
+ * <Section1 />
+ * <WaveDivider fillColor="#1e3a8a" />
+ * <Section2 />
+ */
+
+/**
+ * Props for the WaveDivider component.
+ */
 interface WaveDividerProps {
+  /** Additional CSS classes */
   className?: string;
+  /** SVG fill color (default: "#040b56") */
   fillColor?: string;
 }
 
+/**
+ * Wave SVG divider with layered opacity effect.
+ *
+ * @component
+ * @param props - Component props
+ */
 export function WaveDivider({ className = "", fillColor = "#040b56" }: WaveDividerProps) {
   return (
     <div className={`wave-divider ${className}`}>

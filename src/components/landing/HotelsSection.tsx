@@ -1,3 +1,33 @@
+/**
+ * Hotels section component with horizontal carousel display.
+ *
+ * Features:
+ * - Horizontal scroll carousel with touch/drag support
+ * - Arrow navigation for desktop with scroll position tracking
+ * - Mobile-responsive with snap scrolling
+ * - Hotel cards with image, rating, price, shuttle badge
+ * - Quick action buttons (website, map)
+ * - Fallback to default mock data when no hotels provided
+ *
+ * Hotel card displays:
+ * - Hotel image with zoom-on-hover effect
+ * - Star rating (1-5 stars)
+ * - Price range indicator (฿ symbols)
+ * - Shuttle bus availability badge
+ * - Phone number with click-to-call
+ * - Website and Google Maps links
+ *
+ * @module components/landing/HotelsSection
+ *
+ * @example
+ * // With hotels from database
+ * const hotels = await prisma.hotel.findMany();
+ * <HotelsSection hotels={hotels} />
+ *
+ * @example
+ * // Without props (uses default mock data)
+ * <HotelsSection />
+ */
 "use client";
 
 import { useState, useRef } from "react";
@@ -6,23 +36,42 @@ import { Button } from "@/components/ui/button";
 import { MapPin, Phone, Globe, Bus, Building2, ChevronLeft, ChevronRight, Star } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+/**
+ * Hotel data structure from database.
+ */
 interface Hotel {
+  /** Database ID */
   id: number;
+  /** Hotel name in Thai */
   name: string;
+  /** Contact phone number */
   phone?: string | null;
+  /** Hotel website URL */
   website?: string | null;
+  /** Google Maps URL */
   mapUrl?: string | null;
+  /** Shuttle bus availability: "Y" = available, "N" = not available */
   busFlag: string;
+  /** Hotel image URL (relative or absolute) */
   imageUrl?: string | null;
+  /** Star rating (1-5) */
   rating?: number | null;
+  /** Price range indicator (e.g., "฿฿฿") */
   priceRange?: string | null;
 }
 
+/**
+ * Props for the HotelsSection component.
+ */
 interface HotelsSectionProps {
+  /** Array of hotels to display, falls back to mock data if empty */
   hotels?: Hotel[];
 }
 
-// Default mock hotels data
+/**
+ * Default mock hotels data for development/demo.
+ * Used when no hotels are provided from database.
+ */
 const defaultHotels: Hotel[] = [
   {
     id: 1,
@@ -92,12 +141,27 @@ const defaultHotels: Hotel[] = [
   },
 ];
 
+/**
+ * Hotels section with horizontal carousel navigation.
+ *
+ * @component
+ * @param props - Component props
+ * @param props.hotels - Hotels array from database (optional)
+ */
 export function HotelsSection({ hotels }: HotelsSectionProps) {
+  /** Use provided hotels or fall back to mock data */
   const activeHotels = hotels && hotels.length > 0 ? hotels : defaultHotels;
+  /** Reference to scrollable container for programmatic scrolling */
   const scrollRef = useRef<HTMLDivElement>(null);
+  /** Whether carousel can scroll left (not at start) */
   const [canScrollLeft, setCanScrollLeft] = useState(false);
+  /** Whether carousel can scroll right (not at end) */
   const [canScrollRight, setCanScrollRight] = useState(true);
 
+  /**
+   * Check current scroll position and update navigation button states.
+   * Called on scroll events and after programmatic scrolling.
+   */
   const checkScroll = () => {
     if (scrollRef.current) {
       const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
@@ -106,13 +170,20 @@ export function HotelsSection({ hotels }: HotelsSectionProps) {
     }
   };
 
+  /**
+   * Scroll the carousel in the specified direction.
+   *
+   * @param direction - Scroll direction ("left" or "right")
+   */
   const scroll = (direction: "left" | "right") => {
     if (scrollRef.current) {
+      /** Scroll amount in pixels (approximately one card width + gap) */
       const scrollAmount = 320;
       scrollRef.current.scrollBy({
         left: direction === "left" ? -scrollAmount : scrollAmount,
         behavior: "smooth",
       });
+      // Update button states after scroll animation completes
       setTimeout(checkScroll, 300);
     }
   };

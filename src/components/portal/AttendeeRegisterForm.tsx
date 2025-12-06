@@ -1,3 +1,28 @@
+/**
+ * Attendee Registration Form Component.
+ *
+ * A comprehensive multi-section form for registering conference attendees.
+ * Supports both create and edit modes with role-based field visibility.
+ *
+ * @module AttendeeRegisterForm
+ *
+ * ## Features
+ * - **9 Form Sections**: Government info, registration type, personal info, contact,
+ *   food preferences, transportation (plane/bus/train), accommodation, shuttle service
+ * - **Cascade Dropdowns**: Zone → Province → Hospital, Position Group → Level
+ * - **Create/Edit Modes**: Reuses form logic for new registrations and editing existing ones
+ * - **Payment Lock**: Locks personal info fields after payment is submitted
+ * - **Role-Based UI**: Admins can select any hospital; hospital users are locked to their hospital
+ *
+ * ## Form Data Flow
+ * 1. Admin selects zone → province → hospital (cascade)
+ * 2. Hospital user has hospital pre-filled from session
+ * 3. Position group → level cascade filters available options
+ * 4. Transportation type reveals relevant travel detail fields
+ *
+ * @see {@link ../../app/(portal)/portal/register/page.tsx} for create mode usage
+ * @see {@link ../../app/(portal)/portal/registration/[id]/edit/page.tsx} for edit mode usage
+ */
 "use client";
 
 import { useState, useMemo } from "react";
@@ -43,6 +68,26 @@ import Link from "next/link";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 
+/**
+ * Attendee data structure from the database.
+ * Used in edit mode to populate the form with existing data.
+ *
+ * @property id - Database ID of the attendee
+ * @property hospitalCode - Hospital code the attendee belongs to
+ * @property regTypeId - Registration type (ผู้บริหาร, เกษียณ, ผู้เข้าร่วม)
+ * @property prefix - Name prefix (นาย, นาง, นางสาว)
+ * @property firstName - First name
+ * @property lastName - Last name
+ * @property positionCode - Position code from positions table
+ * @property levelCode - Level code from levels table
+ * @property foodType - Food preference: 1=ทั่วไป, 2=อิสลาม, 3=มังสวิรัติ, 4=เจ
+ * @property vehicleType - Transportation: 1=Plane, 2=Bus, 3=Car, 4=Train
+ * @property airDate1/airDate2 - Arrival/departure flight dates
+ * @property busDate1/busDate2 - Arrival/departure bus dates
+ * @property trainDate1/trainDate2 - Arrival/departure train dates
+ * @property hotelId - Selected hotel ID or null for "other"
+ * @property busToMeet - Shuttle service: 1=ต้องการ, 2=ไม่ต้องการ
+ */
 interface AttendeeData {
   id: number;
   hospitalCode: string | null;
@@ -93,6 +138,23 @@ interface AttendeeData {
   } | null;
 }
 
+/**
+ * Props for the AttendeeRegisterForm component.
+ *
+ * @property regTypes - Registration types (ผู้บริหาร, เกษียณ, ผู้เข้าร่วม)
+ * @property positions - Position master data for dropdown
+ * @property levels - Level master data, filtered by position group
+ * @property levelGroups - Unique position groups for cascade dropdown
+ * @property hotels - Hotel master data for accommodation selection
+ * @property airlines - Airline master data for flight details
+ * @property zones - Health zone master data for hospital cascade (admin only)
+ * @property hospitals - Hospital master data for cascade dropdown
+ * @property userHospital - Current user's hospital (null for admin)
+ * @property isAdmin - Whether user is admin (memberType === 99)
+ * @property mode - Form mode: "create" for new registration, "edit" for existing
+ * @property attendee - Existing attendee data (required for edit mode)
+ * @property payment - Associated payment data (locks personal info if present)
+ */
 interface AttendeeRegisterFormProps {
   regTypes: Array<{ id: number; name: string }>;
   positions: Array<{ code: string; name: string }>;
@@ -114,9 +176,11 @@ interface AttendeeRegisterFormProps {
     zone: { code: string; name: string } | null;
   } | null;
   isAdmin: boolean;
-  // Edit mode props
+  /** Form mode: "create" for new registration, "edit" for existing */
   mode?: "create" | "edit";
+  /** Existing attendee data (required for edit mode) */
   attendee?: AttendeeData | null;
+  /** Associated payment - if present, locks personal info fields */
   payment?: {
     id: number;
     fileName: string | null;
@@ -126,6 +190,10 @@ interface AttendeeRegisterFormProps {
   } | null;
 }
 
+/**
+ * Vehicle type options for transportation selection.
+ * Each type reveals different travel detail fields.
+ */
 const vehicleTypes = [
   { value: "1", label: "เครื่องบิน", icon: Plane },
   { value: "2", label: "รถโดยสาร", icon: Bus },
@@ -133,6 +201,10 @@ const vehicleTypes = [
   { value: "4", label: "รถไฟ", icon: Train },
 ];
 
+/**
+ * Food type options for dietary preferences.
+ * Maps to database foodType field (1-4).
+ */
 const foodTypes = [
   { value: "1", label: "อาหารทั่วไป" },
   { value: "2", label: "อาหารอิสลาม" },
@@ -140,26 +212,88 @@ const foodTypes = [
   { value: "4", label: "อาหารเจ" },
 ];
 
+/**
+ * Name prefix options (Thai honorifics).
+ */
 const prefixOptions = [
   { value: "นาย", label: "นาย" },
   { value: "นาง", label: "นาง" },
   { value: "นางสาว", label: "นางสาว" },
 ];
 
-// Helper to format date for input
+/**
+ * Format a Date object for HTML date input (YYYY-MM-DD).
+ *
+ * @param date - Date object or null
+ * @returns ISO date string (YYYY-MM-DD) or empty string if null
+ *
+ * @example
+ * formatDateForInput(new Date("2024-06-25"))
+ * // Returns: "2024-06-25"
+ */
 function formatDateForInput(date: Date | null): string {
   if (!date) return "";
   const d = new Date(date);
   return d.toISOString().split("T")[0];
 }
 
-// Helper to format time for input
+/**
+ * Format a Date object for HTML time input (HH:mm).
+ *
+ * @param date - Date object containing time or null
+ * @returns Time string (HH:mm) or empty string if null
+ *
+ * @example
+ * formatTimeForInput(new Date("2024-06-25T14:30:00"))
+ * // Returns: "14:30"
+ */
 function formatTimeForInput(date: Date | null): string {
   if (!date) return "";
   const d = new Date(date);
   return d.toTimeString().slice(0, 5);
 }
 
+/**
+ * Multi-section form for registering conference attendees.
+ *
+ * Supports both create and edit modes with extensive cascade filtering
+ * and role-based field visibility.
+ *
+ * @component
+ *
+ * @example
+ * // Create mode (hospital user)
+ * <AttendeeRegisterForm
+ *   regTypes={regTypes}
+ *   positions={positions}
+ *   levels={levels}
+ *   levelGroups={levelGroups}
+ *   hotels={hotels}
+ *   airlines={airlines}
+ *   zones={zones}
+ *   hospitals={hospitals}
+ *   userHospital={hospital}
+ *   isAdmin={false}
+ * />
+ *
+ * @example
+ * // Edit mode (admin)
+ * <AttendeeRegisterForm
+ *   regTypes={regTypes}
+ *   positions={positions}
+ *   levels={levels}
+ *   levelGroups={levelGroups}
+ *   hotels={hotels}
+ *   airlines={airlines}
+ *   zones={zones}
+ *   hospitals={hospitals}
+ *   userHospital={null}
+ *   isAdmin={true}
+ *   mode="edit"
+ *   attendee={existingAttendee}
+ *   payment={associatedPayment}
+ * />
+ */
 export function AttendeeRegisterForm({
   regTypes,
   positions,

@@ -1,7 +1,37 @@
+/**
+ * Slideshow update/delete endpoint for admin.
+ *
+ * Allows admin to update or delete existing slideshow slides.
+ *
+ * @route PATCH /api/admin/slideshow/[id]
+ * @route DELETE /api/admin/slideshow/[id]
+ * @security Admin only (memberType === 99)
+ *
+ * PATCH Request body:
+ * - title?: string - Optional slide title/alt text
+ * - imageUrl: string - Slide image URL (required)
+ * - linkUrl?: string - Optional click-through URL
+ * - sortOrder?: number - Display order (default: 0)
+ * - isActive: boolean - Active status
+ *
+ * Response:
+ * - 200: Updated/deleted slideshow object or success status
+ * - 401: Unauthorized
+ * - 500: Server error
+ *
+ * @module api/admin/slideshow/[id]
+ */
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 
+/**
+ * Update an existing slideshow slide.
+ *
+ * @param request - HTTP request with updated slideshow data in body
+ * @param params - Route params containing slideshow ID
+ * @returns Updated slideshow object or error JSON
+ */
 export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -33,6 +63,13 @@ export async function PATCH(
   }
 }
 
+/**
+ * Delete a slideshow slide.
+ *
+ * @param request - HTTP request
+ * @param params - Route params containing slideshow ID
+ * @returns Success status or error JSON
+ */
 export async function DELETE(
   request: Request,
   { params }: { params: Promise<{ id: string }> }

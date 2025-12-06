@@ -1,3 +1,23 @@
+/**
+ * Auto-playing slideshow/carousel component for landing page.
+ *
+ * Features:
+ * - Automatic slide advancement with configurable interval
+ * - Progress bar showing time until next slide
+ * - Pause on hover, resume on mouse leave
+ * - Manual navigation (prev/next arrows, dot indicators)
+ * - Play/pause toggle button
+ * - Optional click-through links on slides
+ * - Optional title overlay
+ * - Smooth slide transitions with scale/translate effects
+ * - Fallback to default slides when none provided
+ *
+ * @module components/landing/Slideshow
+ *
+ * @example
+ * const slides = await prisma.slideshow.findMany({ where: { isActive: true } });
+ * <Slideshow slides={slides} autoPlayInterval={5000} />
+ */
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
@@ -5,34 +25,61 @@ import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { ChevronLeft, ChevronRight, Pause, Play } from "lucide-react";
 
+/**
+ * Slide data structure.
+ */
 interface Slide {
+  /** Database ID */
   id: number;
+  /** Optional title/caption overlay */
   title?: string | null;
+  /** Image URL (required) */
   imageUrl: string;
+  /** Optional click-through URL */
   linkUrl?: string | null;
 }
 
+/**
+ * Props for the Slideshow component.
+ */
 interface SlideshowProps {
+  /** Slides to display (falls back to defaults if empty) */
   slides?: Slide[];
+  /** Auto-advance interval in milliseconds (default: 5000) */
   autoPlayInterval?: number;
 }
 
-// Default slides using local images
+/**
+ * Default slides for development/demo.
+ */
 const defaultSlides: Slide[] = [
   { id: 1, imageUrl: "/slideshow_001.png", title: null, linkUrl: null },
   { id: 2, imageUrl: "/slideshow_002.png", title: null, linkUrl: null },
   { id: 3, imageUrl: "/slideshow_003.png", title: null, linkUrl: null },
 ];
 
+/**
+ * Auto-playing slideshow with manual controls.
+ *
+ * @component
+ * @param props - Component props
+ */
 export function Slideshow({ slides, autoPlayInterval = 5000 }: SlideshowProps) {
+  /** Current slide index (0-based) */
   const [currentIndex, setCurrentIndex] = useState(0);
+  /** Whether auto-play is active */
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
+  /** Whether a slide transition is in progress */
   const [isTransitioning, setIsTransitioning] = useState(false);
+  /** Progress bar value (0-100) */
   const [progress, setProgress] = useState(0);
 
-  // Use provided slides or default to local images
+  /** Use provided slides or fall back to defaults */
   const activeSlides = slides && slides.length > 0 ? slides : defaultSlides;
 
+  /**
+   * Navigate to next slide with transition lock.
+   */
   const goToNext = useCallback(() => {
     if (isTransitioning) return;
     setIsTransitioning(true);
@@ -41,6 +88,9 @@ export function Slideshow({ slides, autoPlayInterval = 5000 }: SlideshowProps) {
     setTimeout(() => setIsTransitioning(false), 500);
   }, [activeSlides.length, isTransitioning]);
 
+  /**
+   * Navigate to previous slide with transition lock.
+   */
   const goToPrev = useCallback(() => {
     if (isTransitioning) return;
     setIsTransitioning(true);
@@ -49,6 +99,10 @@ export function Slideshow({ slides, autoPlayInterval = 5000 }: SlideshowProps) {
     setTimeout(() => setIsTransitioning(false), 500);
   }, [activeSlides.length, isTransitioning]);
 
+  /**
+   * Navigate to specific slide index.
+   * @param index - Target slide index
+   */
   const goToSlide = (index: number) => {
     if (isTransitioning || index === currentIndex) return;
     setIsTransitioning(true);

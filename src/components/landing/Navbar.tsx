@@ -1,3 +1,44 @@
+/**
+ * Landing page navigation bar with scroll-aware styling.
+ *
+ * Features:
+ * - Transparent to solid background transition on scroll (50px threshold)
+ * - Active section highlighting based on scroll position
+ * - Smooth scroll navigation to page sections
+ * - Responsive mobile menu with slide-down animation
+ * - Logo with hospital branding
+ *
+ * Scroll behavior:
+ * - Tracks window scroll position via useEffect
+ * - Updates `isScrolled` state at 50px threshold for background change
+ * - Calculates active section by checking which section's top is <= 100px
+ *
+ * Navigation sections:
+ * - หน้าแรก (#hero) - Hero section
+ * - ข่าวสาร (#news) - News section
+ * - กำหนดการ (#schedule) - Schedule section
+ * - โรงแรม (#hotels) - Hotels section
+ * - ท่องเที่ยว (#attractions) - Attractions section
+ * - ภาพถ่าย (#photos) - Photos section
+ *
+ * @module components/landing/Navbar
+ *
+ * @example
+ * // In landing page layout
+ * import { Navbar } from "@/components/landing/Navbar";
+ *
+ * export default function LandingPage() {
+ *   return (
+ *     <>
+ *       <Navbar />
+ *       <main>
+ *         <section id="hero">...</section>
+ *         <section id="news">...</section>
+ *       </main>
+ *     </>
+ *   );
+ * }
+ */
 "use client";
 
 import { useState, useEffect } from "react";
@@ -7,6 +48,10 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Menu, X, ChevronRight } from "lucide-react";
 
+/**
+ * Navigation items configuration for landing page sections.
+ * Each item links to a section ID on the page using anchor navigation.
+ */
 const navItems = [
   { label: "หน้าแรก", href: "#hero" },
   { label: "ข่าวสาร", href: "#news" },
@@ -16,12 +61,35 @@ const navItems = [
   { label: "ภาพถ่าย", href: "#photos" },
 ];
 
+/**
+ * Landing page navigation bar component.
+ *
+ * Renders a fixed navigation bar that:
+ * - Changes from transparent to white background on scroll
+ * - Highlights the currently visible section
+ * - Provides smooth scroll navigation
+ * - Adapts to mobile with hamburger menu
+ *
+ * @component
+ */
 export function Navbar() {
+  /** Whether page has scrolled past 50px threshold */
   const [isScrolled, setIsScrolled] = useState(false);
+  /** Mobile menu open/close state */
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  /** Currently visible section ID for active highlighting */
   const [activeSection, setActiveSection] = useState("hero");
 
+  /**
+   * Set up scroll event listener for:
+   * 1. Background transition (transparent -> solid at 50px)
+   * 2. Active section detection (which section is in view)
+   */
   useEffect(() => {
+    /**
+     * Handle scroll events to update navbar state.
+     * Iterates sections in reverse to find the topmost visible one.
+     */
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 50);
 
@@ -43,9 +111,15 @@ export function Navbar() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  /**
+   * Smooth scroll to a page section with offset for fixed navbar.
+   *
+   * @param href - Section anchor (e.g., "#news", "#schedule")
+   */
   const scrollToSection = (href: string) => {
     const element = document.querySelector(href);
     if (element) {
+      // Calculate position with 80px offset for fixed navbar height
       const offsetTop =
         element.getBoundingClientRect().top + window.pageYOffset - 80;
       window.scrollTo({ top: offsetTop, behavior: "smooth" });

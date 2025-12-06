@@ -1,3 +1,30 @@
+/**
+ * Conference schedule item create/edit form for admin panel.
+ *
+ * Features:
+ * - Dual-mode: Create new or edit existing schedule items
+ * - Form fields: day number, date, time range, title, description, location, speaker
+ * - Day number selection (วันที่ 1, 2, 3)
+ * - Time picker for start/end times
+ * - Sort order for display ordering
+ * - Loading state with spinner during submission
+ * - Error handling with Thai error messages
+ *
+ * API endpoints used:
+ * - POST /api/admin/schedule - Create new schedule item
+ * - PATCH /api/admin/schedule/[id] - Update existing item
+ *
+ * @module components/admin/ScheduleForm
+ *
+ * @example
+ * // Create mode
+ * <ScheduleForm />
+ *
+ * @example
+ * // Edit mode
+ * const schedule = await prisma.schedule.findUnique({ where: { id } });
+ * <ScheduleForm schedule={schedule} />
+ */
 "use client";
 
 import { useState } from "react";
@@ -9,26 +36,50 @@ import { Label } from "@/components/ui/label";
 import { ArrowLeft, Save, Loader2 } from "lucide-react";
 import Link from "next/link";
 
+/**
+ * Props for the ScheduleForm component.
+ */
 interface ScheduleFormProps {
+  /** Existing schedule data for edit mode (omit for create mode) */
   schedule?: {
+    /** Database ID */
     id: number;
+    /** Conference day (1, 2, or 3) */
     dayNumber: number;
+    /** Calendar date for this day */
     date: Date;
+    /** Start time in HH:MM format */
     startTime: string;
+    /** End time in HH:MM format */
     endTime: string;
+    /** Session/event title */
     title: string;
+    /** Optional description of the session */
     description: string | null;
+    /** Room/location name (e.g., "ห้องประชุม 1") */
     location: string | null;
+    /** Speaker/presenter name */
     speaker: string | null;
+    /** Display order (lower numbers first) */
     sortOrder: number;
   };
 }
 
+/**
+ * Schedule item form with create/edit functionality.
+ *
+ * @component
+ * @param props - Component props
+ * @param props.schedule - Existing schedule data for edit mode (optional)
+ */
 export function ScheduleForm({ schedule }: ScheduleFormProps) {
   const router = useRouter();
+  /** Submission loading state */
   const [isLoading, setIsLoading] = useState(false);
+  /** Error message for display */
   const [error, setError] = useState("");
 
+  /** Form field values with defaults from existing schedule or defaults */
   const [formData, setFormData] = useState({
     dayNumber: schedule?.dayNumber?.toString() || "1",
     date: schedule?.date ? new Date(schedule.date).toISOString().split("T")[0] : "",
@@ -41,6 +92,10 @@ export function ScheduleForm({ schedule }: ScheduleFormProps) {
     sortOrder: schedule?.sortOrder?.toString() || "0",
   });
 
+  /**
+   * Handle input field changes.
+   * @param e - Input/select/textarea change event
+   */
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => {
@@ -48,6 +103,11 @@ export function ScheduleForm({ schedule }: ScheduleFormProps) {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  /**
+   * Handle form submission for create/update.
+   * Converts dayNumber and sortOrder to integers before sending.
+   * @param e - Form submit event
+   */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);

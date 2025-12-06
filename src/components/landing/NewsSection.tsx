@@ -1,22 +1,53 @@
+/**
+ * News section component for landing page.
+ *
+ * Features:
+ * - Grid layout with featured first article (large)
+ * - Card design with image, date, title, excerpt
+ * - Fallback to mock data when no news provided
+ * - Thai date formatting
+ * - HTML tag stripping from content
+ * - Hover effects and animations
+ *
+ * @module components/landing/NewsSection
+ *
+ * @example
+ * const news = await prisma.news.findMany({ where: { isPublished: true } });
+ * <NewsSection news={news} />
+ */
 "use client";
 
 import { Card, CardContent } from "@/components/ui/card";
 import { CalendarDays, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+/**
+ * News article data structure.
+ */
 interface NewsItem {
+  /** Database ID */
   id: number;
+  /** Article title */
   title: string;
+  /** Article content (may contain HTML) */
   content: string;
+  /** Featured image URL (optional) */
   imageUrl?: string | null;
+  /** Publication date */
   publishedAt: Date;
 }
 
+/**
+ * Props for the NewsSection component.
+ */
 interface NewsSectionProps {
+  /** News articles to display (falls back to mock data if empty) */
   news?: NewsItem[];
 }
 
-// Default mock news data
+/**
+ * Default mock news data for development/demo.
+ */
 const defaultNews: NewsItem[] = [
   {
     id: 1,
@@ -41,8 +72,22 @@ const defaultNews: NewsItem[] = [
   },
 ];
 
+/**
+ * News section with grid layout.
+ *
+ * @component
+ * @param props - Component props
+ * @param props.news - News articles from database (optional)
+ */
 export function NewsSection({ news }: NewsSectionProps) {
+  /** Use provided news or fall back to mock data */
   const activeNews = news && news.length > 0 ? news : defaultNews;
+
+  /**
+   * Format date in Thai locale.
+   * @param date - Date to format
+   * @returns Thai formatted date string
+   */
   const formatDate = (date: Date) => {
     return new Date(date).toLocaleDateString("th-TH", {
       year: "numeric",

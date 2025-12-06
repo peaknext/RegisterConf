@@ -1,3 +1,32 @@
+/**
+ * Attendee edit form for updating registration details.
+ *
+ * Features:
+ * - Edit personal info (name, prefix)
+ * - Update registration type and level
+ * - Change position (with "other" option)
+ * - Modify contact details (phone, email, LINE)
+ * - Select food preference
+ * - Loading state during submission
+ * - Error handling with Thai messages
+ *
+ * API: PATCH /api/attendees/[id]
+ *
+ * @module components/portal/AttendeeEditForm
+ *
+ * @example
+ * const attendee = await prisma.attendee.findUnique({ where: { id } });
+ * const regTypes = await prisma.regType.findMany();
+ * const positions = await prisma.position.findMany();
+ * const levels = await prisma.level.findMany();
+ *
+ * <AttendeeEditForm
+ *   attendee={attendee}
+ *   regTypes={regTypes}
+ *   positions={positions}
+ *   levels={levels}
+ * />
+ */
 "use client";
 
 import { useState } from "react";
@@ -9,26 +38,51 @@ import { Label } from "@/components/ui/label";
 import { ArrowLeft, Save, Loader2 } from "lucide-react";
 import Link from "next/link";
 
+/**
+ * Props for the AttendeeEditForm component.
+ */
 interface AttendeeEditFormProps {
+  /** Attendee data to edit */
   attendee: {
+    /** Database ID */
     id: number;
+    /** Title prefix (นาย/นาง/นางสาว) */
     prefix: string | null;
+    /** First name */
     firstName: string | null;
+    /** Last name */
     lastName: string | null;
+    /** Registration type ID */
     regTypeId: number | null;
+    /** Position code from master data */
     positionCode: string | null;
+    /** Custom position if not in list */
     positionOther: string | null;
+    /** Job level code */
     levelCode: string | null;
+    /** Phone number */
     phone: string | null;
+    /** Email address */
     email: string | null;
+    /** LINE ID */
     line: string | null;
+    /** Food type (1-4) */
     foodType: number | null;
   };
+  /** Available registration types for dropdown */
   regTypes: Array<{ id: number; name: string }>;
+  /** Available positions for dropdown */
   positions: Array<{ code: string; name: string }>;
+  /** Available levels for dropdown (with group) */
   levels: Array<{ code: string; name: string; group: string | null }>;
 }
 
+/**
+ * Attendee edit form component.
+ *
+ * @component
+ * @param props - Component props
+ */
 export function AttendeeEditForm({
   attendee,
   regTypes,
@@ -36,9 +90,12 @@ export function AttendeeEditForm({
   levels,
 }: AttendeeEditFormProps) {
   const router = useRouter();
+  /** Submission loading state */
   const [isLoading, setIsLoading] = useState(false);
+  /** Error message for display */
   const [error, setError] = useState("");
 
+  /** Form field values initialized from attendee data */
   const [formData, setFormData] = useState({
     prefix: attendee.prefix || "",
     firstName: attendee.firstName || "",
@@ -53,6 +110,10 @@ export function AttendeeEditForm({
     foodType: attendee.foodType?.toString() || "",
   });
 
+  /**
+   * Handle input field changes.
+   * @param e - Input/select change event
+   */
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
@@ -60,6 +121,11 @@ export function AttendeeEditForm({
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  /**
+   * Handle form submission.
+   * Converts empty strings to null and numeric fields to integers.
+   * @param e - Form submit event
+   */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);

@@ -1,3 +1,25 @@
+/**
+ * Tourist Attractions Section Component.
+ *
+ * Displays nearby attractions in a filterable carousel layout.
+ * Used on the landing page to showcase local points of interest.
+ *
+ * @module AttractionsSection
+ *
+ * ## Features
+ * - **Category Filtering**: Filter by temple, nature, landmark, cultural
+ * - **Horizontal Carousel**: Scroll through attractions with navigation buttons
+ * - **Interactive Cards**: Hover effects, distance display, map links
+ * - **Responsive Design**: Mobile-optimized with touch-friendly navigation
+ *
+ * ## Categories
+ * - temple: วัด (temples/religious sites)
+ * - nature: ธรรมชาติ (natural attractions)
+ * - landmark: สถานที่สำคัญ (landmarks)
+ * - cultural: วัฒนธรรม (cultural sites)
+ *
+ * @see {@link ../../app/(public)/page.tsx} for landing page integration
+ */
 "use client";
 
 import { useState } from "react";
@@ -15,6 +37,17 @@ import {
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
+/**
+ * Attraction data structure from database.
+ *
+ * @property name - Attraction name (Thai)
+ * @property description - Description text
+ * @property imageUrl - Image path (relative to public folder)
+ * @property category - Category for filtering: "temple", "nature", "landmark", "cultural"
+ * @property mapUrl - Google Maps URL for navigation
+ * @property distance - Distance from venue (e.g., "5 กม.")
+ * @property highlight - Short highlight text for the badge
+ */
 interface Attraction {
   id: number;
   name: string;
@@ -26,6 +59,11 @@ interface Attraction {
   highlight?: string | null;
 }
 
+/**
+ * Props for AttractionsSection component.
+ *
+ * @property attractions - Array of attractions from database. Falls back to mock data if empty.
+ */
 interface AttractionsSectionProps {
   attractions?: Attraction[];
 }

@@ -1,3 +1,39 @@
+/**
+ * Portal sidebar navigation component for hospital portal pages.
+ *
+ * Features:
+ * - Role-based menu filtering (admin-only items hidden from hospital users)
+ * - Responsive design with mobile hamburger menu and desktop fixed sidebar
+ * - Active route highlighting with gradient styling
+ * - User info display with hospital name and email
+ * - Sign out functionality with dynamic origin support (ngrok compatible)
+ *
+ * Menu structure:
+ * - หน้าแรก (Dashboard) - All users
+ * - ตรวจสอบการลงทะเบียน (Registration) - All users
+ * - แจ้งชำระเงิน (Payment) - All users
+ * - ตรวจสอบชำระเงิน (Payment Status) - Admin only
+ * - แดชบอร์ด (Stats) - Admin only
+ * - รายงาน (Reports) - Admin only
+ * - ตั้งค่า (Settings) - Admin only
+ *
+ * @module components/portal/Sidebar
+ * @see {@link ../admin/AdminSidebar.tsx} for admin-specific sidebar
+ *
+ * @example
+ * // In a portal layout
+ * import { PortalSidebar } from "@/components/portal/Sidebar";
+ *
+ * export default function PortalLayout({ children }) {
+ *   const session = await auth();
+ *   return (
+ *     <div className="flex">
+ *       <PortalSidebar user={session.user} />
+ *       <main className="lg:ml-64">{children}</main>
+ *     </div>
+ *   );
+ * }
+ */
 "use client";
 
 import { useState } from "react";
@@ -22,14 +58,25 @@ import {
   Settings,
 } from "lucide-react";
 
+/**
+ * Props for the PortalSidebar component.
+ */
 interface SidebarProps {
+  /** User object from session containing display info and role */
   user: {
+    /** Hospital name or user display name */
     name?: string | null;
+    /** User email address */
     email?: string | null;
+    /** Member type: 1 = hospital rep, 99 = admin */
     memberType?: number;
   };
 }
 
+/**
+ * Navigation menu items configuration.
+ * Items with `adminOnly: true` are filtered out for non-admin users.
+ */
 const menuItems = [
   { label: "หน้าแรก", href: "/portal/dashboard", icon: Home },
   { label: "ตรวจสอบการลงทะเบียน", href: "/portal/registration", icon: Users },
@@ -40,11 +87,29 @@ const menuItems = [
   { label: "ตั้งค่า", href: "/portal/settings", icon: Settings, adminOnly: true },
 ];
 
+/**
+ * Portal sidebar component with role-based navigation.
+ *
+ * Renders a responsive sidebar that:
+ * - Shows/hides admin-only menu items based on user.memberType
+ * - Highlights the currently active route
+ * - Provides mobile hamburger menu on small screens
+ * - Displays user info (hospital name, email)
+ *
+ * @component
+ * @param props - Component props
+ * @param props.user - User session data for display and role checking
+ */
 export function PortalSidebar({ user }: SidebarProps) {
   const pathname = usePathname();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  /** Check if user is admin (memberType 99) for menu filtering */
   const isAdmin = user.memberType === 99;
 
+  /**
+   * Handle user sign out with dynamic origin detection.
+   * Uses window.location.origin to support ngrok/external domains.
+   */
   const handleSignOut = () => {
     // Use dynamic origin for ngrok/external domain support
     const callbackUrl = typeof window !== "undefined"

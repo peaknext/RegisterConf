@@ -1,7 +1,41 @@
+/**
+ * Schedule update/delete endpoint for admin.
+ *
+ * Allows admin to update or delete existing schedule entries.
+ *
+ * @route PATCH /api/admin/schedule/[id]
+ * @route DELETE /api/admin/schedule/[id]
+ * @security Admin only (memberType === 99)
+ *
+ * PATCH Request body:
+ * - dayNumber: number - Day of conference (1, 2, 3, etc.)
+ * - date: string - ISO date string
+ * - startTime: string - Start time (HH:MM format)
+ * - endTime: string - End time (HH:MM format)
+ * - title: string - Session title
+ * - description?: string - Optional session description
+ * - location?: string - Optional venue/room
+ * - speaker?: string - Optional speaker name(s)
+ * - sortOrder?: number - Display order (default: 0)
+ *
+ * Response:
+ * - 200: Updated/deleted schedule object or success status
+ * - 401: Unauthorized
+ * - 500: Server error
+ *
+ * @module api/admin/schedule/[id]
+ */
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 
+/**
+ * Update an existing schedule entry.
+ *
+ * @param request - HTTP request with updated schedule data in body
+ * @param params - Route params containing schedule ID
+ * @returns Updated schedule object or error JSON
+ */
 export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -37,6 +71,13 @@ export async function PATCH(
   }
 }
 
+/**
+ * Delete a schedule entry.
+ *
+ * @param request - HTTP request
+ * @param params - Route params containing schedule ID
+ * @returns Success status or error JSON
+ */
 export async function DELETE(
   request: Request,
   { params }: { params: Promise<{ id: string }> }

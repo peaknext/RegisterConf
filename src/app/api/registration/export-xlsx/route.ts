@@ -1,9 +1,36 @@
+/**
+ * Excel export endpoint for registration list.
+ *
+ * Generates XLSX files with filtered attendee data for the registration page.
+ * Hospital representatives can only export their own hospital's data.
+ * Admins can export any hospital or all hospitals.
+ *
+ * @route GET /api/registration/export-xlsx
+ * @security Authenticated users (hospital reps scoped to their hospital)
+ *
+ * Query parameters:
+ * - search: Text search (name, email, hospital name)
+ * - zone: Health zone code filter
+ * - province: Province name filter
+ * - hospital: Hospital code filter (admin only)
+ * - status: Payment status filter
+ *
+ * Excel output:
+ * - 16 columns covering registration, contact, travel, and payment data
+ * - Status color coding (green=paid, yellow=pending, cyan=reviewing, red=cancelled)
+ * - Alternating row colors
+ * - Thai date formatting
+ *
+ * @module api/registration/export-xlsx
+ */
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 import ExcelJS from "exceljs";
 
-// Status mappings
+/**
+ * Status code to Thai label mapping.
+ */
 const statusLabels: Record<number, string> = {
   1: "ค้างชำระ",
   2: "รอตรวจสอบ",
@@ -11,6 +38,7 @@ const statusLabels: Record<number, string> = {
   9: "ชำระแล้ว",
 };
 
+/** Food type code to Thai label mapping. */
 const foodLabels: Record<number, string> = {
   1: "อาหารทั่วไป",
   2: "อาหารอิสลาม",
@@ -18,6 +46,7 @@ const foodLabels: Record<number, string> = {
   4: "อาหารเจ",
 };
 
+/** Vehicle type code to Thai label mapping. */
 const vehicleLabels: Record<number, string> = {
   1: "เครื่องบิน",
   2: "รถโดยสาร",
@@ -25,6 +54,11 @@ const vehicleLabels: Record<number, string> = {
   4: "รถไฟ",
 };
 
+/**
+ * Format date for Thai locale display.
+ * @param date - Date to format (or null)
+ * @returns Thai formatted date string or empty string
+ */
 function formatDate(date: Date | null): string {
   if (!date) return "";
   return date.toLocaleDateString("th-TH", {
@@ -34,6 +68,12 @@ function formatDate(date: Date | null): string {
   });
 }
 
+/**
+ * Format date and time for Thai locale display.
+ * @param date - Date to format
+ * @param time - Time to format (optional)
+ * @returns Thai formatted date-time string
+ */
 function formatDateTime(date: Date | null, time: Date | null): string {
   if (!date) return "";
   const dateStr = formatDate(date);
@@ -46,6 +86,13 @@ function formatDateTime(date: Date | null, time: Date | null): string {
   return `${dateStr} เวลา ${timeStr}`;
 }
 
+/**
+ * Format travel details into human-readable string.
+ * Handles plane, bus, and train travel types.
+ *
+ * @param attendee - Attendee object with travel fields
+ * @returns Multi-line string with travel details
+ */
 function formatTravelDetails(attendee: {
   vehicleType: number | null;
   // Plane
@@ -139,6 +186,12 @@ function formatTravelDetails(attendee: {
   return lines.join("\n");
 }
 
+/**
+ * Generate Excel export of registration data.
+ *
+ * @param request - HTTP request with query parameters
+ * @returns Excel file as binary response or error JSON
+ */
 export async function GET(request: Request) {
   try {
     const session = await auth();

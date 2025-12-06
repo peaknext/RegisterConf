@@ -1,7 +1,36 @@
+/**
+ * News update/delete endpoint for admin.
+ *
+ * Allows admin to update or delete existing news articles.
+ *
+ * @route PATCH /api/admin/news/[id]
+ * @route DELETE /api/admin/news/[id]
+ * @security Admin only (memberType === 99)
+ *
+ * PATCH Request body:
+ * - title: string - News headline
+ * - content: string - News article content
+ * - imageUrl?: string - Optional featured image URL
+ * - isPublished: boolean - Publish status
+ *
+ * Response:
+ * - 200: Updated/deleted news object or success status
+ * - 401: Unauthorized
+ * - 500: Server error
+ *
+ * @module api/admin/news/[id]
+ */
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 
+/**
+ * Update an existing news article.
+ *
+ * @param request - HTTP request with updated news data in body
+ * @param params - Route params containing news ID
+ * @returns Updated news object or error JSON
+ */
 export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -32,6 +61,13 @@ export async function PATCH(
   }
 }
 
+/**
+ * Delete a news article.
+ *
+ * @param request - HTTP request
+ * @param params - Route params containing news ID
+ * @returns Success status or error JSON
+ */
 export async function DELETE(
   request: Request,
   { params }: { params: Promise<{ id: string }> }

@@ -1,3 +1,23 @@
+/**
+ * Action buttons for registration list page.
+ *
+ * Features:
+ * - Link to payment notification page
+ * - Excel export with current filter parameters preserved
+ * - Loading state during export
+ *
+ * Export preserves current URL filters:
+ * - search: Text search query
+ * - zone: Health zone filter
+ * - province: Province filter
+ * - hospital: Hospital filter
+ * - status: Payment status filter
+ *
+ * @module components/portal/RegistrationActions
+ *
+ * @example
+ * <RegistrationActions />
+ */
 "use client";
 
 import { useState } from "react";
@@ -6,10 +26,20 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { CreditCard, Download, Loader2 } from "lucide-react";
 
+/**
+ * Registration page action buttons (payment link + export).
+ *
+ * @component
+ */
 export function RegistrationActions() {
+  /** Export in progress state */
   const [isExporting, setIsExporting] = useState(false);
   const searchParams = useSearchParams();
 
+  /**
+   * Handle Excel export with current filter parameters.
+   * Downloads file via blob and programmatic link click.
+   */
   const handleExport = async () => {
     setIsExporting(true);
 

@@ -1,12 +1,38 @@
+/**
+ * Photos gallery section for landing page.
+ *
+ * Features:
+ * - Link to Google Drive for photo gallery
+ * - Decorative polaroid-style preview cards
+ * - Fallback message when no URL configured
+ * - Animated decorative elements
+ *
+ * @module components/landing/PhotosSection
+ *
+ * @example
+ * const config = await prisma.config.findFirst();
+ * <PhotosSection googleDriveUrl={config?.googleDriveUrl} />
+ */
 "use client";
 
 import { Button } from "@/components/ui/button";
 import { Camera, ExternalLink, Image as ImageIcon, FolderOpen } from "lucide-react";
 
+/**
+ * Props for the PhotosSection component.
+ */
 interface PhotosSectionProps {
+  /** Google Drive folder URL for photo gallery (shows placeholder if null) */
   googleDriveUrl?: string | null;
 }
 
+/**
+ * Photos section with Google Drive link.
+ *
+ * @component
+ * @param props - Component props
+ * @param props.googleDriveUrl - Link to photo gallery (optional)
+ */
 export function PhotosSection({ googleDriveUrl }: PhotosSectionProps) {
   return (
     <section id="photos" className="py-20 md:py-28 bg-gradient-to-b from-white via-kram-50/50 to-kram-50 relative overflow-hidden">

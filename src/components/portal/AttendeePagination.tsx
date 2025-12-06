@@ -1,3 +1,30 @@
+/**
+ * Pagination component for attendee lists with URL-based state.
+ *
+ * Features:
+ * - Page navigation (previous/next buttons)
+ * - Configurable items per page (10, 25, 50, 100)
+ * - URL parameter preservation (search, sort, order, hidePaid)
+ * - Display of current range and total count
+ * - Automatic page reset when changing limit
+ *
+ * URL Parameters managed:
+ * - page: Current page number
+ * - limit: Items per page (omitted if default 10)
+ * - Preserves: search, sort, order, hidePaid from existing URL
+ *
+ * @module components/portal/AttendeePagination
+ *
+ * @example
+ * <AttendeePagination
+ *   currentPage={1}
+ *   totalPages={10}
+ *   total={95}
+ *   limit={10}
+ *   startIndex={0}
+ *   basePath="/portal/registration"
+ * />
+ */
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
@@ -11,6 +38,9 @@ import {
 } from "@/components/ui/select";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
+/**
+ * Available options for items per page dropdown.
+ */
 const LIMIT_OPTIONS = [
   { value: "10", label: "10" },
   { value: "25", label: "25" },
@@ -18,15 +48,30 @@ const LIMIT_OPTIONS = [
   { value: "100", label: "100" },
 ];
 
+/**
+ * Props for the AttendeePagination component.
+ */
 interface AttendeePaginationProps {
+  /** Current page number (1-indexed) */
   currentPage: number;
+  /** Total number of pages */
   totalPages: number;
+  /** Total count of all records */
   total: number;
+  /** Number of items per page */
   limit: number;
+  /** Starting index for display (0-indexed) */
   startIndex: number;
+  /** Base URL path for pagination links (default: /portal/registration) */
   basePath?: string;
 }
 
+/**
+ * Pagination component with URL-based state management.
+ *
+ * @component
+ * @param props - Component props
+ */
 export function AttendeePagination({
   currentPage,
   totalPages,
@@ -38,6 +83,13 @@ export function AttendeePagination({
   const router = useRouter();
   const searchParams = useSearchParams();
 
+  /**
+   * Build URL with pagination parameters while preserving existing search params.
+   *
+   * @param newPage - Target page number
+   * @param newLimit - Optional new items per page (omits if 10)
+   * @returns Complete URL string with all parameters
+   */
   const buildUrl = (newPage: number, newLimit?: number) => {
     const params = new URLSearchParams();
 
@@ -62,17 +114,28 @@ export function AttendeePagination({
     return `${basePath}?${params.toString()}`;
   };
 
+  /**
+   * Handle items-per-page change. Resets to page 1 to avoid
+   * landing on an invalid page when total pages decrease.
+   *
+   * @param value - New limit value as string
+   */
   const handleLimitChange = (value: string) => {
-    // Reset to page 1 when changing limit
     router.push(buildUrl(1, parseInt(value)));
   };
 
+  /**
+   * Navigate to previous page if not on first page.
+   */
   const handlePrevPage = () => {
     if (currentPage > 1) {
       router.push(buildUrl(currentPage - 1));
     }
   };
 
+  /**
+   * Navigate to next page if not on last page.
+   */
   const handleNextPage = () => {
     if (currentPage < totalPages) {
       router.push(buildUrl(currentPage + 1));

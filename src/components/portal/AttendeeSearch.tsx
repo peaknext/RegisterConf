@@ -1,3 +1,29 @@
+/**
+ * Attendee Search and Filter Component.
+ *
+ * Provides cascade filtering for the attendee registration list.
+ * Supports URL-based state synchronization for bookmarkable searches.
+ *
+ * @module AttendeeSearch
+ *
+ * ## Features
+ * - **Text Search**: Search by name, email, phone
+ * - **Cascade Filtering**: Zone → Province → Hospital (admin only)
+ * - **Status Filter**: Filter by payment status
+ * - **URL State Sync**: All filters are persisted in URL params
+ * - **Pagination Aware**: Resets to page 1 when filters change
+ *
+ * ## URL Parameters
+ * - search: Text search query
+ * - zone: Zone code filter
+ * - province: Province name filter
+ * - hospital: Hospital code filter
+ * - status: Payment status (1=pending, 2=reviewing, 3=cancelled, 9=paid)
+ * - page, limit, sort, order: Pagination params (preserved across filter changes)
+ *
+ * @see {@link ./AttendeePagination.tsx} for pagination component
+ * @see {@link ../../app/(portal)/portal/registration/page.tsx} for page integration
+ */
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
@@ -20,12 +46,18 @@ import {
 } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
 
+/**
+ * Health zone data structure.
+ */
 interface Zone {
   id: string;
   code: string;
   name: string;
 }
 
+/**
+ * Hospital data structure with zone relationship.
+ */
 interface Hospital {
   id: string;
   code: string;
@@ -34,12 +66,23 @@ interface Hospital {
   zoneCode: string | null;
 }
 
+/**
+ * Props for the AttendeeSearch component.
+ *
+ * @property zones - Health zone master data for cascade filtering
+ * @property hospitals - Hospital master data for cascade filtering
+ * @property isAdmin - Whether to show admin-only filters (zone, province, hospital)
+ */
 interface Props {
   zones?: Zone[];
   hospitals?: Hospital[];
   isAdmin?: boolean;
 }
 
+/**
+ * Payment status filter options.
+ * Maps to attendee.status values in the database.
+ */
 const statusOptions = [
   { value: "all", label: "ทั้งหมด" },
   { value: "1", label: "ค้างชำระ" },
@@ -48,29 +91,52 @@ const statusOptions = [
   { value: "3", label: "ยกเลิก" },
 ];
 
+/**
+ * Cascade filter search component for attendee registration list.
+ *
+ * Admin users see zone → province → hospital filters.
+ * Hospital users only see status filter.
+ *
+ * @component
+ *
+ * @example
+ * // Admin view with all filters
+ * <AttendeeSearch
+ *   zones={zones}
+ *   hospitals={hospitals}
+ *   isAdmin={true}
+ * />
+ *
+ * @example
+ * // Hospital user view (status only)
+ * <AttendeeSearch isAdmin={false} />
+ */
 export function AttendeeSearch({ zones = [], hospitals = [], isAdmin = false }: Props) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [search, setSearch] = useState(searchParams.get("search") || "");
 
-  // Read values from URL
+  // Read current filter values from URL params
   const zoneFromUrl = searchParams.get("zone") || "all";
   const provinceFromUrl = searchParams.get("province") || "all";
   const hospitalFromUrl = searchParams.get("hospital") || "all";
   const statusFromUrl = searchParams.get("status") || "all";
 
-  // Popover states
+  // Popover open/close states for combobox dropdowns
   const [zoneOpen, setZoneOpen] = useState(false);
   const [provinceOpen, setProvinceOpen] = useState(false);
   const [hospitalOpen, setHospitalOpen] = useState(false);
   const [statusOpen, setStatusOpen] = useState(false);
 
-  // Sync search state when URL changes
+  // Sync local search state when URL changes (e.g., browser back/forward)
   useEffect(() => {
     setSearch(searchParams.get("search") || "");
   }, [searchParams]);
 
-  // Derived: provinces from selected zone
+  /**
+   * Derived provinces based on selected zone.
+   * Extracts unique provinces from hospitals filtered by zone.
+   */
   const provinces = useMemo(() => {
     let filtered = hospitals;
     if (zoneFromUrl !== "all") {
@@ -84,7 +150,10 @@ export function AttendeeSearch({ zones = [], hospitals = [], isAdmin = false }: 
     );
   }, [hospitals, zoneFromUrl]);
 
-  // Derived: hospitals from zone + province
+  /**
+   * Derived hospitals based on selected zone and province.
+   * Filters hospitals by zone and province selections.
+   */
   const filteredHospitals = useMemo(() => {
     let result = hospitals;
     if (zoneFromUrl !== "all") {
@@ -96,6 +165,12 @@ export function AttendeeSearch({ zones = [], hospitals = [], isAdmin = false }: 
     return result.sort((a, b) => a.name.localeCompare(b.name, "th"));
   }, [hospitals, zoneFromUrl, provinceFromUrl]);
 
+  /**
+   * Build URL with updated filter params while preserving sort/pagination.
+   *
+   * @param options - Filter values to update (undefined = keep current value)
+   * @returns URL string for navigation
+   */
   const buildUrl = (options: {
     newSearch?: string;
     newZone?: string;

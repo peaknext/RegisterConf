@@ -1,9 +1,41 @@
+/**
+ * Excel export endpoint for admin reports.
+ *
+ * Generates XLSX files with attendee data for various report types.
+ * Admin-only - hospital representatives cannot access this endpoint.
+ *
+ * @route GET /api/reports/export-xlsx
+ * @security Admin only (memberType === 99)
+ *
+ * Query parameters:
+ * - reportType: "all" | "position" | "regStatus" | "food" | "hotel" | "vehicle" | "payment"
+ * - zoneCode: Filter by health zone
+ * - province: Filter by province
+ * - hospitalCode: Filter by specific hospital
+ * - Additional filters based on reportType (positionCode, levelCode, foodType, hotelId, etc.)
+ *
+ * Excel output:
+ * - 30 columns covering all attendee data
+ * - Status color coding (green=paid, yellow=pending, cyan=reviewing)
+ * - Thai date formatting
+ * - Frozen header row
+ *
+ * Status codes:
+ * - 1 = ค้างชำระ (Pending payment)
+ * - 2 = รอตรวจสอบ (Awaiting review)
+ * - 3 = ยกเลิก (Cancelled)
+ * - 9 = ชำระแล้ว (Paid)
+ *
+ * @module api/reports/export-xlsx
+ */
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 import ExcelJS from "exceljs";
 
-// Status mappings
+/**
+ * Status code to Thai label mapping for attendees.
+ */
 const statusLabels: Record<number, string> = {
   1: "ค้างชำระ",
   2: "รอตรวจสอบ",
@@ -11,6 +43,7 @@ const statusLabels: Record<number, string> = {
   9: "ชำระแล้ว",
 };
 
+/** Food type code to Thai label mapping. */
 const foodLabels: Record<number, string> = {
   1: "อาหารทั่วไป",
   2: "อาหารอิสลาม",
@@ -18,6 +51,7 @@ const foodLabels: Record<number, string> = {
   4: "อาหารเจ",
 };
 
+/** Vehicle type code to Thai label mapping. */
 const vehicleLabels: Record<number, string> = {
   1: "เครื่องบิน",
   2: "รถโดยสาร",
@@ -25,17 +59,24 @@ const vehicleLabels: Record<number, string> = {
   4: "รถไฟ",
 };
 
+/** Shuttle bus need code to Thai label mapping. */
 const shuttleLabels: Record<number, string> = {
   1: "ต้องการ",
   2: "ไม่ต้องการ",
 };
 
+/** Registration type ID to Thai label mapping. */
 const regStatusLabels: Record<number, string> = {
   1: "ผู้อำนวยการ / ผู้บริหาร",
   2: "ผู้เกษียณอายุราชการ",
   3: "ผู้เข้าร่วมประชุม",
 };
 
+/**
+ * Format date for Thai locale display.
+ * @param date - Date to format (or null)
+ * @returns Thai formatted date string or empty string
+ */
 function formatDate(date: Date | null): string {
   if (!date) return "";
   return date.toLocaleDateString("th-TH", {
@@ -45,6 +86,12 @@ function formatDate(date: Date | null): string {
   });
 }
 
+/**
+ * Generate Excel report with attendee data.
+ *
+ * @param request - HTTP request with query parameters
+ * @returns Excel file as binary response or error JSON
+ */
 export async function GET(request: Request) {
   try {
     const session = await auth();

@@ -1,12 +1,39 @@
+/**
+ * Back-to-top floating action button for landing page.
+ *
+ * Features:
+ * - Appears after scrolling 500px down
+ * - Smooth scroll to top on click
+ * - Animated entrance/exit with translate + opacity
+ * - Floating animation when visible
+ * - Ripple ping effect
+ * - Gradient background styling
+ *
+ * @module components/landing/BackToTop
+ *
+ * @example
+ * // In landing page layout
+ * <BackToTop />
+ */
 "use client";
 
 import { useEffect, useState } from "react";
 import { ArrowUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+/**
+ * Floating back-to-top button component.
+ *
+ * @component
+ */
 export function BackToTop() {
+  /** Whether button is visible (scrollY > 500px) */
   const [isVisible, setIsVisible] = useState(false);
 
+  /**
+   * Set up scroll listener to show/hide button.
+   * Uses passive listener for better scroll performance.
+   */
   useEffect(() => {
     const handleScroll = () => {
       setIsVisible(window.scrollY > 500);
@@ -16,6 +43,9 @@ export function BackToTop() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  /**
+   * Smooth scroll to page top.
+   */
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };

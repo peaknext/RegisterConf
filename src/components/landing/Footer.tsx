@@ -1,19 +1,60 @@
+/**
+ * Landing page footer component with contact information and quick links.
+ *
+ * Features:
+ * - Dynamic contact information from database (footerInfo prop)
+ * - Fallback default values for address, phone, email
+ * - Quick links with smooth scroll navigation
+ * - Social media links (website, Facebook)
+ * - Thai Buddhist year display (พ.ศ.)
+ * - Decorative gradient background with blur effects
+ *
+ * Footer sections:
+ * 1. Logo & About - Conference branding and description
+ * 2. Quick Links - Navigation to page sections
+ * 3. Contact - Address, phone, email from settings
+ * 4. Bottom bar - Copyright and developer credit
+ *
+ * @module components/landing/Footer
+ *
+ * @example
+ * // In landing page (fetches footer info from API)
+ * const footerInfo = await fetch('/api/settings/footer').then(r => r.json());
+ * <Footer footerInfo={footerInfo} />
+ *
+ * @example
+ * // Without props (uses default values)
+ * <Footer />
+ */
 "use client";
 
 import Link from "next/link";
 import Image from "next/image";
 import { MapPin, Phone, Mail, Globe, ChevronRight, Heart } from "lucide-react";
 
+/**
+ * Props for the Footer component.
+ */
 interface FooterProps {
+  /** Dynamic footer information from database settings */
   footerInfo?: {
+    /** Organizer/hospital name */
     organizerName?: string;
+    /** Physical address for contact section */
     address?: string;
+    /** Contact phone number */
     phone?: string;
+    /** Contact email address */
     email?: string;
+    /** Fax number (optional) */
     fax?: string;
   };
 }
 
+/**
+ * Quick navigation links for footer section.
+ * Uses anchor hrefs for smooth scroll to page sections.
+ */
 const quickLinks = [
   { label: "หน้าแรก", href: "#hero" },
   { label: "ข่าวสาร", href: "#news" },
@@ -23,10 +64,22 @@ const quickLinks = [
   { label: "ภาพถ่าย", href: "#photos" },
 ];
 
+/**
+ * Landing page footer with contact info and navigation.
+ *
+ * @component
+ * @param props - Component props
+ * @param props.footerInfo - Dynamic contact information from settings
+ */
 export function Footer({ footerInfo }: FooterProps) {
   const currentYear = new Date().getFullYear();
+  /** Thai Buddhist year (พ.ศ. = Gregorian year + 543) */
   const thaiYear = currentYear + 543;
 
+  /**
+   * Smooth scroll to a page section.
+   * @param href - Section anchor (e.g., "#news")
+   */
   const scrollToSection = (href: string) => {
     const element = document.querySelector(href);
     if (element) {
