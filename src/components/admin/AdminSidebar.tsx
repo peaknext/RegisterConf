@@ -44,7 +44,11 @@ export function AdminSidebar({ user }: AdminSidebarProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const handleSignOut = () => {
-    signOut({ callbackUrl: "/" });
+    // Use dynamic origin for ngrok/external domain support
+    const callbackUrl = typeof window !== "undefined"
+      ? `${window.location.origin}/`
+      : "/";
+    signOut({ callbackUrl });
   };
 
   const SidebarContent = () => (
